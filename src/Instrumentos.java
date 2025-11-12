@@ -1,5 +1,6 @@
 public class Instrumentos {
     int quantidadeInstrumentos;
     String[] instrumentosMusicais = {"guitarra", "violão", "baixo","bateria", "cajon", "teclado", "percussão", "sanfona"};
-    Double[] valorCache = new Double[quantidadeInstrumentos];
+    int[] numeroDeInstrumentos = new int[8];
+    Double[] valorCache = new Double[8];
 }
