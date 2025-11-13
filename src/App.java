@@ -19,13 +19,16 @@ public class App {
                     cadastrarShow(raizShow);
                     break;
                 case '2':
-
+                    String funcaoAtualizar = "atualizar";
+                    listarShows(raizShow, funcaoAtualizar);
                     break;
                 case '3':
-
+                    String funcaoExcluir = "excluir";
+                    listarShows(raizShow,  funcaoExcluir);
                     break;
                 case '4':
-                    vizualizarShows(raizShow);
+                    String funcaoVisualizar = "visualizar";
+                    listarShows(raizShow,  funcaoVisualizar);
                     break;
                 case '5':
                     iniciarResetar(raiz, raizShow);
@@ -119,39 +122,82 @@ public class App {
         }
     }
 
-    private static void excluirShow(String raizShow){
+    private static void atualizarShow(String raizShow, File[] arquivos) {
         Scanner sc = new Scanner(System.in);
-        boolean existe;
-        File dir = new File(raizShow);
-        existe = existeArquivo(dir);
-        if(!existe) {
-            System.out.println("Nenhum show cadastrado ainda!");
+        int opShow = -1;
+
+        // Escolha do show
+        do {
+            System.out.print("Digite o número do show que deseja atualizar: ");
+            opShow = sc.nextInt() - 1;
+            sc.nextLine(); // limpar buffer
+            if (opShow < 0 || opShow >= arquivos.length) {
+                System.out.println("Número inválido! Tente novamente.\n");
+            }
+        } while (opShow < 0 || opShow >= arquivos.length);
+
+        // Mostra o conteúdo atual
+        imprimirArquivo(raizShow, arquivos[opShow].getName());
+
+        // Confirma atualização
+        String op;
+        do {
+            System.out.print("Deseja realmente atualizar este show? (S/N): ");
+            op = sc.nextLine().toUpperCase();
+        } while (!op.equals("S") && !op.equals("N"));
+
+        if (op.equals("N")) {
+            System.out.println("Atualização cancelada.\n");
+            return;
+        }
+
+        // Apaga o arquivo antigo
+        if (arquivos[opShow].delete()) {
+            System.out.println("Arquivo antigo removido com sucesso!");
         } else {
-            File[] arquivos = dir.listFiles();
-            listarArquivos(arquivos);
-            String op;
-            int opShow = 0;
-            do {
-                do {
-                    System.out.println("Deseja EXCLUIR algum show? (S/N)\nR= ");
-                    op = sc.nextLine().toUpperCase();
-                } while (!op.equals("N")&&!op.equals("S"));
-                if (op.equals("S")) {
-                    System.out.println("Digite o número do show que deseja visualizar: ");
-                    do {
-                        opShow = sc.nextInt() - 1;
-                        sc.nextLine(); // limpar o buffer
-                    }while (opShow < 0 || opShow >= arquivos.length);
-                    imprimirArquivo(raizShow, arquivos[opShow].getName());
-                }
-            } while (!op.equals("N"));
+            System.out.println("Erro ao remover o arquivo antigo.\n");
+            return;
+        }
+
+        // Cadastra novamente (gera novo ID e arquivo atualizado)
+        System.out.println("\n--- INSIRA OS NOVOS DADOS DO SHOW ---\n");
+        cadastrarShow(raizShow);
+
+        System.out.println("Show atualizado com sucesso!\n");
+    }
+
+
+    private static void excluirShow(File[] arquivos){
+        Scanner sc = new Scanner(System.in);
+        String op = "";
+        int opShow = 0;
+
+        System.out.println("Digite o número do show que você deseja excluir: ");
+        do {
+            opShow = sc.nextInt() - 1;
+            sc.nextLine(); // limpar o buffer
+        }while (opShow < 0 || opShow >= arquivos.length);
+
+        do {
+            System.out.printf("Tem certeza que deseja excluir o show '%s'? (S/N)\nR= \n", arquivos[opShow].getName());
+            op = sc.nextLine().toUpperCase();
+        } while (!op.equals("N")&&!op.equals("S"));
+        if (op.equals("S")) {
+            if (arquivos[opShow].delete()) {
+                System.out.println("Show excluído com sucesso!\n");
+            } else {
+                System.out.println("Erro ao tentar excluir o show.\n");
+            }
+        } else {
+            System.out.println("Exclusão cancelada.\n");
         }
     }
 
-    private static void vizualizarShows(String raizShow) {
+    private static void listarShows(String raizShow, String funcao) {
         Scanner sc = new Scanner(System.in);
         boolean existe;
         File dir = new File(raizShow);
+        String op = "";
 
         existe = existeArquivo(dir);
 
@@ -160,20 +206,27 @@ public class App {
         } else {
             File[] arquivos = dir.listFiles();
             listarArquivos(arquivos);
-            String op;
-            int opShow = 0;
             do {
-                do {
-                    System.out.println("Deseja visualizar algum show? (S/N)\nR= ");
-                    op = sc.nextLine().toUpperCase();
-                } while (!op.equals("N")&&!op.equals("S"));
-                if (op.equals("S")) {
-                    System.out.println("Digite o número do show que deseja visualizar: ");
+                if (funcao.equals("visualizar")) {
+                    op = visualisarShows(raizShow, arquivos);
+                } else if (funcao.equals("excluir")) {
+                    excluirShow(arquivos);
                     do {
-                        opShow = sc.nextInt() - 1;
-                        sc.nextLine(); // limpar o buffer
-                    }while (opShow < 0 || opShow >= arquivos.length);
-                    imprimirArquivo(raizShow, arquivos[opShow].getName());
+                        System.out.println("Deseja excluir outro show? (S/N)\nR= ");
+                        op = sc.nextLine().toUpperCase();
+                    } while (!op.equals("N")&&!op.equals("S"));
+                    if (op.equals("S")) {
+                        listarShows(raizShow, funcao);
+                    }
+                } else if (funcao.equals("atualizar")) {
+                    atualizarShow(raizShow, arquivos);
+                    do {
+                        System.out.print("Deseja atualizar outro show? (S/N)\nR= ");
+                        op = sc.nextLine().toUpperCase();
+                    } while (!op.equals("N") && !op.equals("S"));
+                    if (op.equals("S")) {
+                        listarShows(raizShow, funcao);
+                    }
                 }
             } while (!op.equals("N"));
 
@@ -182,7 +235,26 @@ public class App {
         }
     }
 
-
+    private static String visualisarShows(String raizShow, File[] arquivos) {
+        Scanner sc = new Scanner(System.in);
+        String op = "";
+        int opShow = 0;
+        do {
+            System.out.println("Deseja visualizar algum show? (S/N)\nR= ");
+            op = sc.nextLine().toUpperCase();
+        } while (!op.equals("N")&&!op.equals("S"));
+        if (op.equals("S")) {
+            System.out.println("Digite o número do show que deseja visualizar: ");
+            do {
+                opShow = sc.nextInt() - 1;
+                sc.nextLine(); // limpar o buffer
+            }while (opShow < 0 || opShow >= arquivos.length);
+            imprimirArquivo(raizShow, arquivos[opShow].getName());
+            return op;
+        } else {
+            return op;
+        }
+    }
 
     private static void listarArquivos(File[] arquivos) {
         System.out.println("Shows cadastrados: ");
@@ -294,7 +366,7 @@ public class App {
                 + "\n1) Cadastrar novo show"
                 + "\n2) Atualizar show"
                 + "\n3) Excluir show"
-                + "\n4) Listar shows pendentes"
+                + "\n4) Visualizar shows pendentes"
                 + "\n5) Iniciar/Resetar"
                 + "\n6) Sair"
                 + "\n-----------------------");
