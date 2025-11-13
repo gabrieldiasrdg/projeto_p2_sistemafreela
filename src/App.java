@@ -1,6 +1,9 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class App {
@@ -16,19 +19,19 @@ public class App {
             opcao=sc.next().charAt(0);
             switch (opcao) {
                 case '1':
-                    cadastrarShow(raizShow);
+                    cadastrarShow(raizShow, sc);
                     break;
                 case '2':
                     String funcaoAtualizar = "atualizar";
-                    listarShows(raizShow, funcaoAtualizar);
+                    listarShows(raizShow, funcaoAtualizar, sc);
                     break;
                 case '3':
                     String funcaoExcluir = "excluir";
-                    listarShows(raizShow,  funcaoExcluir);
+                    listarShows(raizShow,  funcaoExcluir, sc);
                     break;
                 case '4':
                     String funcaoVisualizar = "visualizar";
-                    listarShows(raizShow,  funcaoVisualizar);
+                    listarShows(raizShow,  funcaoVisualizar, sc);
                     break;
                 case '5':
                     iniciarResetar(raiz, raizShow);
@@ -40,8 +43,7 @@ public class App {
 
 
     }
-    private static void cadastrarShow(String raizShow) {
-        Scanner sc=new Scanner(System.in);
+    private static void cadastrarShow(String raizShow, Scanner sc) {
         Show s = new Show();
         s.dataEvento = new Data();
         s.enderecoEvento = new Endereco();
@@ -50,68 +52,185 @@ public class App {
         s.instrumentos = new Instrumentos();
 
         //DATA
+        int anoAtual = LocalDate.now().getYear();
+        boolean dataValida = false;
         System.out.println("Insira a data do evento no formato **DD MM AAAA** (Ex: 10 11 2025): ");
-        s.dataEvento.dia = sc.nextInt();
-        s.dataEvento.mes = sc.nextInt();
-        s.dataEvento.ano = sc.nextInt();
+        do {
+            try {
+                System.out.println("R= ");
+                int dia = sc.nextInt();
+                int mes = sc.nextInt();
+                int ano = sc.nextInt();
+                LocalDate dataEvento = LocalDate.of(ano, mes, dia);
+
+                if (dataEvento.getYear() < anoAtual) { //Não deixa programar show pra um ano anterior do ano de criação
+                    System.out.print("\n--------------------\n");
+                    System.out.print("Erro: O ano deve ser igual ou superior a " + anoAtual + ".");
+                    System.out.print("\n--------------------\n");
+                } else if (dataEvento.isBefore(LocalDate.now())) { //Não deixa programar show pra uma data anterior da data de criação
+                    System.out.print("\n--------------------\n");
+                    System.out.print("Erro: A data não pode ser anterior à data de hoje.");
+                    System.out.print("\n--------------------\n");
+                } else {
+                    s.dataEvento.dia = dia;
+                    s.dataEvento.mes = mes;
+                    s.dataEvento.ano = ano;
+                    dataValida = true;
+                }
+            } catch(InputMismatchException e) { //Captura um possível dado incorreto inserido pelo usuário
+                System.out.print("\n--------------------\n");
+                System.out.print("Erro: Digite apenas números inteiros.");
+                System.out.print("\n--------------------\n");
+                sc.nextLine(); // Limpa o buffer após o erro
+            } catch (java.time.DateTimeException e) { // Captura erros como "30 de Fevereiro" ou "Mês 13" (Erros de data)
+                System.out.print("\n--------------------\n");
+                System.out.print("Erro: Data inválida (Ex: dia não existe no mês, mês inválido, etc.).");
+                System.out.print("\n--------------------\n");
+                sc.nextLine(); // Limpa o buffer
+            }
+        } while (!dataValida);
+
+        System.out.println();
 
         //HORÁRIOS EVENTO
-        System.out.println("Insira o horário de INÍCIO do evento em **HH MM** (Ex: 14 00)): "); //HorárioInicial
-        s.horarioInicial.hora = sc.nextInt();
-        s.horarioInicial.minuto = sc.nextInt();
-        System.out.println("Insira o horário de TÉRMINO do evento em **HH MM** (Ex: 17 00)): "); //HorárioFinal
-        s.horarioFinal.hora = sc.nextInt();
-        s.horarioFinal.minuto = sc.nextInt();
+        boolean horarioValido = false;
+        do {
+            try {
+                System.out.println("Insira o horário de INÍCIO do evento em **HH MM** (Ex: 12 00)): ");
+                int horaInicial = sc.nextInt();
+                int minutoInicial = sc.nextInt();
+                System.out.println("Insira o horário de FINAL do evento em **HH MM** (Ex: 15 00)): ");
+                int horaFinal = sc.nextInt();
+                int minutoFinal = sc.nextInt();
 
-        sc.nextLine(); //limpar o buffer
+                LocalTime inicio = LocalTime.of(horaInicial, minutoInicial);
+                LocalTime fim = LocalTime.of(horaFinal, minutoFinal);
+
+                if(fim.isBefore(inicio) || fim.equals(inicio)) { //Erros lógicos entre os horários
+                    System.out.print("\n--------------------\n");
+                    System.out.print("Erro: O horário de término deve ser DEPOIS do horário de início.");
+                    System.out.print("\n--------------------\n");
+                } else {
+                    s.horarioInicial.hora = horaInicial;
+                    s.horarioInicial.minuto = minutoInicial;
+                    s.horarioFinal.hora = horaFinal;
+                    s.horarioFinal.minuto = minutoFinal;
+                    horarioValido = true;
+                    sc.nextLine(); //limpar o buffer
+                }
+            } catch (InputMismatchException e) { //Captura um possível dado incorreto inserido pelo usuário
+                System.out.print("\n--------------------\n");
+                System.out.print("Erro: Digite apenas números inteiros.");
+                System.out.print("\n--------------------\n");
+                sc.nextLine(); // Limpa o buffer
+            } catch  (java.time.DateTimeException e) { //Captura erros de formato/lógica no horário
+                System.out.print("\n--------------------\n");
+                System.out.print("Erro de Horário: Horas devem ser entre 0 e 23, minutos entre 0 e 59.");
+                System.out.print("\n--------------------\n");
+            }
+        } while(!horarioValido);
+
+        System.out.println();
 
         //ENDEREÇO
+        boolean enderecoValido = false;
         System.out.println("- Informações sobre o local onde ocorrerá o evento -");
-        System.out.println("Cidade: ");
-        s.enderecoEvento.cidade = sc.nextLine();
-        System.out.println("Bairro: ");
-        s.enderecoEvento.bairro = sc.nextLine();
-        System.out.println("Logradouro: ");
-        s.enderecoEvento.logradouro = sc.nextLine();
-        System.out.println("Número: ");
-        s.enderecoEvento.numero = sc.nextInt();
-        sc.nextLine(); //limpar o buffer
-        System.out.println("Complemento(Características do local): ");
-        s.enderecoEvento.compemento = sc.nextLine();
+        do {
+            try {
+                System.out.print("Cidade: ");
+                s.enderecoEvento.cidade = sc.nextLine().trim();
+                while (s.enderecoEvento.cidade.isEmpty()) { //Se estiver vazio
+                    System.out.print("Cidade não pode ser vazia. Insira novamente: ");
+                    s.enderecoEvento.cidade = sc.nextLine().trim();
+                }
+
+                System.out.print("Bairro: ");
+                s.enderecoEvento.bairro = sc.nextLine().trim();
+                while (s.enderecoEvento.bairro.isEmpty()) {//Se estiver vazio
+                    System.out.print("Bairro não pode ser vazio. Insira novamente: ");
+                    s.enderecoEvento.bairro = sc.nextLine().trim();
+                }
+
+                System.out.print("Logradouro: ");
+                s.enderecoEvento.logradouro = sc.nextLine().trim();
+                while (s.enderecoEvento.logradouro.isEmpty()) {//Se estiver vazio
+                    System.out.print("Logradouro não pode ser vazio. Insira novamente: ");
+                    s.enderecoEvento.logradouro = sc.nextLine().trim();
+                }
+
+                System.out.print("Número: ");
+                s.enderecoEvento.numero = sc.nextInt();
+                sc.nextLine(); // limpar buffer
+
+                System.out.print("Complemento (opcional): ");
+                s.enderecoEvento.complemento = sc.nextLine();
+                enderecoValido = true;
+            }catch (InputMismatchException e) { //Captura um possível dado incorreto inserido pelo usuário
+                System.out.print("\n--------------------\n");
+                System.out.print("Erro: Digite apenas números inteiros na parte de 'NÚMERO'.");
+                System.out.print("\n--------------------\n");
+                sc.nextLine(); // Limpa o buffer
+            }
+        }while (!enderecoValido);
+
+        System.out.println();
 
         //INSTRUMENTOS
-        int salvaUltimaOp = -1;
-        double salvaUltimoCache = 0.0;
-        do {
+        double[] salvaCache = new double[8]; //Pra usar o mesmo cachê caso repita o instrumento
+
         System.out.println("Insira a quantidade de instrumentistas a serem contratados(Limite de 8 intrumentos): ");
+        do {
         s.instrumentos.quantidadeInstrumentos = sc.nextInt();
         } while (s.instrumentos.quantidadeInstrumentos<1 || s.instrumentos.quantidadeInstrumentos>8);
+
         int op = 0;
-        for (int i = 0; i < s.instrumentos.quantidadeInstrumentos; i++) {
+
+        for (int i = 0; i < s.instrumentos.quantidadeInstrumentos; i++) { //Vai rodar até completar a quantidade de instrumentos solicitado
             System.out.printf("Insira %dº instrumento requerido na lista: \n", i+1);
             do {
-                menuInstrumentos();
-                op = sc.nextInt();
+                try {
+                    menuInstrumentos(); //Lista os instrumentos disponíveis
+                    op = sc.nextInt();
+                    sc.nextLine(); // Limpa o buffer
+                }catch (InputMismatchException e) {
+                    System.out.print("\n--------------------\n");
+                    System.out.print("Erro: Digite apenas números inteiros.");
+                    System.out.print("\n--------------------\n");
+                    sc.nextLine(); // Limpa o buffer
+                }
             } while (op < 1 || op > 8);
-            do{
-                if (salvaUltimaOp == op) {
-                    s.instrumentos.valorCache[i] = salvaUltimoCache;
-                } else {
-                    System.out.printf("Instira o valor do cachê do instrumentista que tocará o(a) %s: R$\n", s.instrumentos.instrumentosMusicais[op - 1]);
-                    s.instrumentos.valorCache[i] = sc.nextDouble();
-                    if (s.instrumentos.valorCache[i] < 150) {
-                        System.out.println("A escravidão foi abolida em 1888, insira um valor acima de R$150,00!!\n");
+
+            int idx = op - 1;
+            boolean cacheValido = false; // Valor do cachê
+
+            while (!cacheValido) {
+                if (salvaCache[idx] > 0) {// Se o instrumento já foi usado, reaproveita o cache
+                    s.instrumentos.valorCache[idx] = salvaCache[idx];
+                    cacheValido = true;
+                } else { // Novo instrumento pergunta cache
+                    System.out.printf("Insira o valor do cachê para o(a) %s: R$ ", s.instrumentos.instrumentosMusicais[idx]);
+                    s.instrumentos.valorCache[idx] = sc.nextDouble();
+                    if (s.instrumentos.valorCache[idx] < 150) {
+                        System.out.println("\n!! O cachê mínimo é R$150,00 !!\n");
+                    } else {
+                        cacheValido = true;
                     }
                 }
-            } while(s.instrumentos.valorCache[i] < 150);
-            salvaUltimaOp = op;
-            salvaUltimoCache = s.instrumentos.valorCache[i];
-            s.instrumentos.numeroDeInstrumentos[op-1]++;
+            }
+
+            salvaCache[idx] = s.instrumentos.valorCache[idx]; // Armazena o cache para uso futuro
+            s.instrumentos.numeroDeInstrumentos[idx]++;// Incrementa quantidade daquele instrumento específico
+
         }
+
+        System.out.println();
+
         //INFORMAÇÕES ADICIONAIS
         System.out.println("INSIRA AS INFORMAÇÕES ADICIONAIS SOBRE O SHOW(OPCIONAL): ");
         sc.nextLine(); // limpar o buffer
         s.infoAdicionais = sc.nextLine();
+
+        System.out.println();
 
         //CRIANDO ARQUIVO
         s.id = gerarID(s.dataEvento.ano, s.dataEvento.mes, s.dataEvento.dia, s.horarioInicial.hora, s.horarioInicial.minuto);
@@ -122,12 +241,10 @@ public class App {
         }
     }
 
-    private static void atualizarShow(String raizShow, File[] arquivos) {
-        Scanner sc = new Scanner(System.in);
+    private static void atualizarShow(String raizShow, File[] arquivos, Scanner sc) {
         int opShow = -1;
 
-        // Escolha do show
-        do {
+        do { //Escolha do show
             System.out.print("Digite o número do show que deseja atualizar: ");
             opShow = sc.nextInt() - 1;
             sc.nextLine(); // limpar buffer
@@ -136,11 +253,10 @@ public class App {
             }
         } while (opShow < 0 || opShow >= arquivos.length);
 
-        // Mostra o conteúdo atual
-        imprimirArquivo(raizShow, arquivos[opShow].getName());
+        imprimirArquivo(raizShow, arquivos[opShow].getName());      //Mostra o conteúdo atual
 
-        // Confirma atualização
-        String op;
+        String op;//Confirma atualização
+
         do {
             System.out.print("Deseja realmente atualizar este show? (S/N): ");
             op = sc.nextLine().toUpperCase();
@@ -151,24 +267,22 @@ public class App {
             return;
         }
 
-        // Apaga o arquivo antigo
-        if (arquivos[opShow].delete()) {
+        if (arquivos[opShow].delete()) { //Apaga o arquivo antigo
             System.out.println("Arquivo antigo removido com sucesso!");
         } else {
             System.out.println("Erro ao remover o arquivo antigo.\n");
             return;
         }
 
-        // Cadastra novamente (gera novo ID e arquivo atualizado)
+        //Cadastra novamente (gera novo ID e arquivo atualizado)
         System.out.println("\n--- INSIRA OS NOVOS DADOS DO SHOW ---\n");
-        cadastrarShow(raizShow);
+        cadastrarShow(raizShow, sc);
 
         System.out.println("Show atualizado com sucesso!\n");
     }
 
 
-    private static void excluirShow(File[] arquivos){
-        Scanner sc = new Scanner(System.in);
+    private static void excluirShow(File[] arquivos, Scanner sc){
         String op = "";
         int opShow = 0;
 
@@ -178,10 +292,8 @@ public class App {
             sc.nextLine(); // limpar o buffer
         }while (opShow < 0 || opShow >= arquivos.length);
 
-        do {
-            System.out.printf("Tem certeza que deseja excluir o show '%s'? (S/N)\nR= \n", arquivos[opShow].getName());
-            op = sc.nextLine().toUpperCase();
-        } while (!op.equals("N")&&!op.equals("S"));
+        System.out.printf("Tem certeza que deseja excluir o show '%s'? (S/N)\n", arquivos[opShow].getName());
+        op = lerSN(sc);
         if (op.equals("S")) {
             if (arquivos[opShow].delete()) {
                 System.out.println("Show excluído com sucesso!\n");
@@ -193,8 +305,7 @@ public class App {
         }
     }
 
-    private static void listarShows(String raizShow, String funcao) {
-        Scanner sc = new Scanner(System.in);
+    private static void listarShows(String raizShow, String funcao, Scanner sc) {
         boolean existe;
         File dir = new File(raizShow);
         String op = "";
@@ -206,49 +317,40 @@ public class App {
         } else {
             File[] arquivos = dir.listFiles();
             listarArquivos(arquivos);
-            do {
-                if (funcao.equals("visualizar")) {
-                    op = visualisarShows(raizShow, arquivos);
-                } else if (funcao.equals("excluir")) {
-                    excluirShow(arquivos);
-                    do {
-                        System.out.println("Deseja excluir outro show? (S/N)\nR= ");
-                        op = sc.nextLine().toUpperCase();
-                    } while (!op.equals("N")&&!op.equals("S"));
-                    if (op.equals("S")) {
-                        listarShows(raizShow, funcao);
-                    }
-                } else if (funcao.equals("atualizar")) {
-                    atualizarShow(raizShow, arquivos);
-                    do {
-                        System.out.print("Deseja atualizar outro show? (S/N)\nR= ");
-                        op = sc.nextLine().toUpperCase();
-                    } while (!op.equals("N") && !op.equals("S"));
-                    if (op.equals("S")) {
-                        listarShows(raizShow, funcao);
-                    }
-                }
-            } while (!op.equals("N"));
+            if (funcao.equals("visualizar")) {
+                visualizarShows(raizShow, arquivos, sc);
+            } else if (funcao.equals("excluir")) {
+                excluirShow(arquivos, sc);
+            } else if (funcao.equals("atualizar")) {
+                atualizarShow(raizShow, arquivos, sc);
+            }
 
             System.out.println("Voltando ao menu principal...\n");
 
         }
     }
 
-    private static String visualisarShows(String raizShow, File[] arquivos) {
-        Scanner sc = new Scanner(System.in);
+    private static String visualizarShows(String raizShow, File[] arquivos, Scanner sc) {
         String op = "";
-        int opShow = 0;
-        do {
-            System.out.println("Deseja visualizar algum show? (S/N)\nR= ");
-            op = sc.nextLine().toUpperCase();
-        } while (!op.equals("N")&&!op.equals("S"));
+        int opShow = -1; // Inicializa com valor inválido
+        System.out.println("Deseja visualizar algum show? (S/N)");
+        sc.nextLine(); //LIMPA BUFFER
+        op = lerSN(sc);
         if (op.equals("S")) {
-            System.out.println("Digite o número do show que deseja visualizar: ");
             do {
-                opShow = sc.nextInt() - 1;
-                sc.nextLine(); // limpar o buffer
-            }while (opShow < 0 || opShow >= arquivos.length);
+                System.out.println("Digite o número do show que deseja visualizar (1 a " + arquivos.length + "): ");
+                try { // Tenta ler o inteiro com tratamento de erro
+                    opShow = sc.nextInt() - 1;
+                    sc.nextLine(); // Limpar o buffer
+                } catch (java.util.InputMismatchException e) {
+                    System.out.println("ERRO: Entrada inválida. Digite apenas números.");
+                    sc.nextLine(); // Limpa a linha inteira, incluindo o buffer
+                    opShow = -1; // Força a repetição do loop
+                }
+                if (opShow < 0 || opShow >= arquivos.length) {
+                    System.out.println("Número fora do intervalo válido.");
+                }
+            } while (opShow < 0 || opShow >= arquivos.length);
             imprimirArquivo(raizShow, arquivos[opShow].getName());
             return op;
         } else {
@@ -290,15 +392,16 @@ public class App {
         }
         try {
             PrintWriter pw = new PrintWriter(raizShow + s.id + ".txt");
+            pw.append("\n=== DETALHES DO SHOW ===\n");
             pw.append("Id: " + s.id + "\n");
             pw.append("Data do evento: "+s.dataEvento.dia+"/"+s.dataEvento.mes+"/"+s.dataEvento.ano+"\n");
             pw.append("Carga horária de show (Início/Fim): "+s.horarioInicial.hora+"h"+s.horarioInicial.minuto+"min"+" - "+s.horarioFinal.hora+"h"+s.horarioFinal.minuto+"min"+"\n");
             pw.append("Informações do endereço onde ocorrerá o evento: \n");
             pw.append("- Cidade: "+s.enderecoEvento.cidade+"\n");
             pw.append("- Endereço: "+s.enderecoEvento.bairro+", "+s.enderecoEvento.logradouro+", Nº "+s.enderecoEvento.numero+"\n");
-            pw.append("- Complemento: "+s.enderecoEvento.compemento+"\n");
+            pw.append("- Complemento: "+s.enderecoEvento.complemento+"\n");
             pw.append("Instrumentos requeridos: "+"\n");
-            for(int i = 0; i < s.instrumentos.quantidadeInstrumentos; i++) {
+            for(int i = 0; i < s.instrumentos.numeroDeInstrumentos.length; i++) {
                 if(s.instrumentos.numeroDeInstrumentos[i]>0) {
                     if (s.instrumentos.numeroDeInstrumentos[i]>1){
                         for (int j = 0; j < s.instrumentos.numeroDeInstrumentos[i] ; j++) {
@@ -316,6 +419,15 @@ public class App {
             e.printStackTrace();
             return false;
         }
+    }
+
+    private static String lerSN(Scanner sc) {
+        String op;
+        do {
+            System.out.print("R= ");
+            op = sc.nextLine().toUpperCase();
+        } while (!op.equals("S") && !op.equals("N"));
+        return op;
     }
 
     private static String gerarID(int ano, int mes, int dia, int horaInicio, int minutoInicio) {

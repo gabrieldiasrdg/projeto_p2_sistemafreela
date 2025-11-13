@@ -3,5 +3,5 @@ public class Endereco {
     String bairro;
     String logradouro;
     int numero;
-    String compemento;
+    String complemento;
 }
