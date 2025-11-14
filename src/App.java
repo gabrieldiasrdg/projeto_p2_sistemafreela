@@ -178,9 +178,10 @@ public class App {
         //INSTRUMENTOS
         double[] salvaCache = new double[8]; //Pra usar o mesmo cachê caso repita o instrumento
 
-        System.out.println("Insira a quantidade de instrumentistas a serem contratados(Limite de 8 intrumentos): ");
+        System.out.println("Insira a quantidade de instrumentistas a serem contratados(Limite de 8 intrumentos): \n");
         do {
-        s.instrumentos.quantidadeInstrumentos = sc.nextInt();
+            System.out.println("R= ");
+            s.instrumentos.quantidadeInstrumentos = sc.nextInt();
         } while (s.instrumentos.quantidadeInstrumentos<1 || s.instrumentos.quantidadeInstrumentos>8);
 
         int op = 0;
@@ -227,7 +228,6 @@ public class App {
 
         //INFORMAÇÕES ADICIONAIS
         System.out.println("INSIRA AS INFORMAÇÕES ADICIONAIS SOBRE O SHOW(OPCIONAL): ");
-        sc.nextLine(); // limpar o buffer
         s.infoAdicionais = sc.nextLine();
 
         System.out.println();
