@@ -10,39 +10,69 @@ public class App {
     public static void main(String[] args) {
         String raiz="Freela/";
         String raizShow = raiz + "Shows/";
+        String raizBanda = raiz + "Bandas/";
+        String raizMusico = raiz + "Musicos/";
 
         char opcao;
         Scanner sc=new Scanner(System.in);
 
         do {
             menuPrincipal();
-            opcao=sc.next().charAt(0);
+            opcao = sc.next().charAt(0);
+
             switch (opcao) {
-                case '1':
+
+                case '1': // Cadastrar Banda/Artista
+                    break;
+
+                case '2': // Cadastrar Show
                     cadastrarShow(raizShow, sc);
                     break;
-                case '2':
+
+                case '3': // Cadastrar Músico
+                    break;
+
+                case '4': // Atualizar Show
                     String funcaoAtualizar = "atualizar";
                     listarShows(raizShow, funcaoAtualizar, sc);
                     break;
-                case '3':
-                    String funcaoExcluir = "excluir";
-                    listarShows(raizShow,  funcaoExcluir, sc);
+
+                case '5': // Excluir Show/Músico
                     break;
-                case '4':
-                    String funcaoVisualizar = "visualizar";
-                    listarShows(raizShow,  funcaoVisualizar, sc);
+
+                case '6': // Listar Shows Pendentes
                     break;
-                case '5':
+
+                case '7': // Listar Músicos
+                    break;
+
+                case '8': // Listar Bandas
+                    break;
+
+                case '9': // Iniciar/Resetar
                     iniciarResetar(raiz, raizShow);
                     break;
-                case '6':
+
+                case '0': // Sair
                     System.out.println("Saindo...");
+                    break;
+
+                default:
+                    System.out.println("Opção inválida. Tente novamente.");
+                    break;
             }
-        }while(opcao!='6');
+
+        } while (opcao != '0');
 
 
     }
+
+    private static void cadastrarBanda(String raizBanda, Scanner sc) {
+        Banda banda = new Banda();
+        System.out.println("Insira o nome da banda: ");
+
+    }
+
     private static void cadastrarShow(String raizShow, Scanner sc) {
         Show s = new Show();
         s.dataEvento = new Data();
@@ -180,12 +210,12 @@ public class App {
 
         System.out.println("Insira a quantidade de instrumentistas a serem contratados(Limite de 8 intrumentos): ");
         do {
-        s.instrumentos.quantidadeInstrumentos = sc.nextInt();
-        } while (s.instrumentos.quantidadeInstrumentos<1 || s.instrumentos.quantidadeInstrumentos>8);
+        s.instrumentos.quantidadeInstrumentosRequeridos = sc.nextInt();
+        } while (s.instrumentos.quantidadeInstrumentosRequeridos<1 || s.instrumentos.quantidadeInstrumentosRequeridos>8);
 
         int op = 0;
 
-        for (int i = 0; i < s.instrumentos.quantidadeInstrumentos; i++) { //Vai rodar até completar a quantidade de instrumentos solicitado
+        for (int i = 0; i < s.instrumentos.quantidadeInstrumentosRequeridos; i++) { //Vai rodar até completar a quantidade de instrumentos solicitado
             System.out.printf("Insira %dº instrumento requerido na lista: \n", i+1);
             do {
                 try {
@@ -208,7 +238,7 @@ public class App {
                     s.instrumentos.valorCache[idx] = salvaCache[idx];
                     cacheValido = true;
                 } else { // Novo instrumento pergunta cache
-                    System.out.printf("Insira o valor do cachê para o(a) %s: R$ ", s.instrumentos.instrumentosMusicais[idx]);
+                    System.out.printf("Insira o valor do cachê para o(a) %s: R$ ", s.instrumentos.instrumentoRequeridos[idx]);
                     s.instrumentos.valorCache[idx] = sc.nextDouble();
                     if (s.instrumentos.valorCache[idx] < 150) {
                         System.out.println("\n!! O cachê mínimo é R$150,00 !!\n");
@@ -219,7 +249,7 @@ public class App {
             }
 
             salvaCache[idx] = s.instrumentos.valorCache[idx]; // Armazena o cache para uso futuro
-            s.instrumentos.numeroDeInstrumentos[idx]++;// Incrementa quantidade daquele instrumento específico
+            s.instrumentos.contInstrumentos[idx]++;// Incrementa quantidade daquele instrumento específico
 
         }
 
@@ -234,7 +264,7 @@ public class App {
 
         //CRIANDO ARQUIVO
         s.id = gerarID(s.dataEvento.ano, s.dataEvento.mes, s.dataEvento.dia, s.horarioInicial.hora, s.horarioInicial.minuto);
-        if (criarArquivo(raizShow, s)) {
+        if (criarArquivo(raizShow)) {
             System.out.println("Show cadastrado com sucesso!");
         } else {
             System.out.println("Erro ao gravar o arquivo do show.");
@@ -384,41 +414,65 @@ public class App {
         }
     }
 
-    private static boolean criarArquivo(String raizShow, Show s) {
-        File f = new File(raizShow + s.id + ".txt");
-        if (f.exists()) {
-            System.out.println("Já existe um show cadastrado nesse horário!");
-            return false;
-        }
-        try {
-            PrintWriter pw = new PrintWriter(raizShow + s.id + ".txt");
-            pw.append("\n=== DETALHES DO SHOW ===\n");
-            pw.append("Id: " + s.id + "\n");
-            pw.append("Data do evento: "+s.dataEvento.dia+"/"+s.dataEvento.mes+"/"+s.dataEvento.ano+"\n");
-            pw.append("Carga horária de show (Início/Fim): "+s.horarioInicial.hora+"h"+s.horarioInicial.minuto+"min"+" - "+s.horarioFinal.hora+"h"+s.horarioFinal.minuto+"min"+"\n");
-            pw.append("Informações do endereço onde ocorrerá o evento: \n");
-            pw.append("- Cidade: "+s.enderecoEvento.cidade+"\n");
-            pw.append("- Endereço: "+s.enderecoEvento.bairro+", "+s.enderecoEvento.logradouro+", Nº "+s.enderecoEvento.numero+"\n");
-            pw.append("- Complemento: "+s.enderecoEvento.complemento+"\n");
-            pw.append("Instrumentos requeridos: "+"\n");
-            for(int i = 0; i < s.instrumentos.numeroDeInstrumentos.length; i++) {
-                if(s.instrumentos.numeroDeInstrumentos[i]>0) {
-                    if (s.instrumentos.numeroDeInstrumentos[i]>1){
-                        for (int j = 0; j < s.instrumentos.numeroDeInstrumentos[i] ; j++) {
-                            pw.append(String.format("- %s %d: Pendente | R$%.2f%n", s.instrumentos.instrumentosMusicais[i], j+1, s.instrumentos.valorCache[i]));
+    private static boolean criarArquivo(String raizArquivo) {
+        Show s = new Show();
+
+        if (raizArquivo.equals("Shows/")) {
+            File f = new File(raizArquivo + s.id + ".txt");
+            if (f.exists()) {
+                System.out.println("Já existe um show cadastrado nesse horário!");
+                return false;
+            }
+            try {
+                PrintWriter pw = new PrintWriter(raizArquivo + s.id + ".txt");
+                pw.append("\n=== DETALHES DO SHOW ===\n");
+                pw.append("Id: " + s.id + "\n");
+                pw.append("Data do evento: "+s.dataEvento.dia+"/"+s.dataEvento.mes+"/"+s.dataEvento.ano+"\n");
+                pw.append("Carga horária de show (Início/Fim): "+s.horarioInicial.hora+"h"+s.horarioInicial.minuto+"min"+" - "+s.horarioFinal.hora+"h"+s.horarioFinal.minuto+"min"+"\n");
+                pw.append("Informações do endereço onde ocorrerá o evento: \n");
+                pw.append("- Cidade: "+s.enderecoEvento.cidade+"\n");
+                pw.append("- Endereço: "+s.enderecoEvento.bairro+", "+s.enderecoEvento.logradouro+", Nº "+s.enderecoEvento.numero+"\n");
+                pw.append("- Complemento: "+s.enderecoEvento.complemento+"\n");
+                pw.append("Instrumentos requeridos: "+"\n");
+                for(int i = 0; i < s.instrumentos.contInstrumentos.length; i++) {
+                    if(s.instrumentos.contInstrumentos[i]>0) {
+                        if (s.instrumentos.contInstrumentos[i]>1){
+                            for (int j = 0; j < s.instrumentos.contInstrumentos[i] ; j++) {
+                                pw.append(String.format("- %s %d: Pendente | R$%.2f%n", s.instrumentos.contInstrumentos[i], j+1, s.instrumentos.valorCache[i]));
+                            }
+                        } else {
+                            pw.append(String.format("- %s: Pendente | R$%.2f%n", s.instrumentos.contInstrumentos[i], s.instrumentos.valorCache[i]));
                         }
-                    } else {
-                        pw.append(String.format("- %s: Pendente | R$%.2f%n", s.instrumentos.instrumentosMusicais[i], s.instrumentos.valorCache[i]));
                     }
                 }
+                pw.append("Informações adicionais: "+ s.infoAdicionais+"\n");
+                pw.close();
+                return true;
+            } catch (FileNotFoundException e) {
+                System.out.println("Erro: arquivo não encontrado.");
+                return false;
             }
-            pw.append("Informações adicionais: "+ s.infoAdicionais+"\n");
-            pw.close();
-            return true;
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return false;
+        } else if (raizArquivo.equals("Bandas/")) {
+            s.banda =  new Banda();
+            File f = new File(raizArquivo + s.banda.id + ".txt");
+            if (f.exists()) {
+                System.out.println("Essa banda ja está cadastrada!");
+                return false;
+            }
+            try {
+                PrintWriter pw = new PrintWriter(raizArquivo + s.banda.id + ".txt");
+                pw.append("\n=== DETALHES DA BANDA ===\n");
+                pw.append("Id: " + s.banda.id + "\n");
+                pw.append("Nome da banda: "+s.banda.nome+"\n");
+                pw.append("CNPJ: "+s.banda.cnpj+"\n");
+                pw.close();
+                return true;
+            } catch (FileNotFoundException e) {
+                System.out.println("Erro: arquivo não encontrado.");
+                return false;
+            }
         }
+        return true; //APAGAR DEPOIS
     }
 
     private static String lerSN(Scanner sc) {
@@ -474,15 +528,21 @@ public class App {
     }
 
     private static void menuPrincipal() {
-        System.out.println(	"\n-----------------------"
-                + "\n1) Cadastrar novo show"
-                + "\n2) Atualizar show"
-                + "\n3) Excluir show"
-                + "\n4) Visualizar shows pendentes"
-                + "\n5) Iniciar/Resetar"
-                + "\n6) Sair"
-                + "\n-----------------------");
-        System.out.println("Opção: ");
-
+        System.out.println(
+                "\n----------------------------" +
+                        "\n        MENU PRINCIPAL" +
+                        "\n----------------------------" +
+                        "\n1) Cadastrar Banda/Artista" +
+                        "\n2) Cadastrar Show" +
+                        "\n3) Cadastrar Músico" +
+                        "\n4) Atualizar Show" +
+                        "\n5) Excluir Show/Músico" +
+                        "\n6) Listar Shows Pendentes" +
+                        "\n7) Listar Músicos" +
+                        "\n8) Listar Bandas" +
+                        "\n9) Iniciar/Resetar" +
+                        "\n0) Sair" +
+                        "\n----------------------------");
+        System.out.print("Opção: ");
     }
 }

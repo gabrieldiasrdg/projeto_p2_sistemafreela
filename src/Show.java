@@ -4,6 +4,8 @@ public class Show {
     Endereco enderecoEvento;
     Hora horarioInicial;
     Hora horarioFinal;
-    Instrumentos instrumentos;
     String infoAdicionais;
+    Musico musico;
+    Banda banda;
+    Instrumentos  instrumentos;
 }
