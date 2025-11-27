@@ -68,8 +68,22 @@ public class App {
     }
 
     private static void cadastrarBanda(String raizBanda, Scanner sc) {
-        Banda banda = new Banda();
+        Show s = new Show();
+        s.banda = new Banda();
+
         System.out.println("Insira o nome da banda: ");
+        s.banda.nome = sc.nextLine();
+        do {
+            System.out.println("Insira o cnpj da banda: ");
+            s.banda.cnpj = sc.nextLine();
+            s.banda.cnpj = s.banda.cnpj.replaceAll("\\D", "");//Remove tudo que não for número
+            if (s.banda.cnpj.length() != 14) {
+                System.out.println("ERRO! O CNPJ deve conter 14 digitos!");
+            }
+        } while (s.banda.cnpj.length() != 14);
+        s.banda.cnpj = Banda.formatarCnpj(s.banda.cnpj);
+
+
 
     }
 
