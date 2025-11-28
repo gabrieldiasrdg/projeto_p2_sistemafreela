@@ -12,4 +12,8 @@ public class Banda {
                 cnpj.substring(8, 12) + "-" +
                 cnpj.substring(12, 14);
     }
+    public static String gerarIDBanda(String nome, String cnpj) {
+        String id = String.format("%s_%s", nome, cnpj);
+        return id;
+    }
 }

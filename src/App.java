@@ -50,7 +50,7 @@ public class App {
                     break;
 
                 case '9': // Iniciar/Resetar
-                    iniciarResetar(raiz, raizShow);
+                    iniciarResetar(raiz, raizShow, raizBanda, raizMusico);
                     break;
 
                 case '0': // Sair
@@ -82,8 +82,7 @@ public class App {
             }
         } while (s.banda.cnpj.length() != 14);
         s.banda.cnpj = Banda.formatarCnpj(s.banda.cnpj);
-
-
+        s.banda.id = Banda.gerarIDBanda(s.banda.nome, s.banda.cnpj);
 
     }
 
@@ -503,13 +502,21 @@ public class App {
         return id;
     }
 
-    private static void iniciarResetar(String raiz, String raizShow) {
+    private static void iniciarResetar(String raiz, String raizShow, String raizBanda, String raizMusico) {
         File dir = new File(raiz);
         if(!dir.exists()){ //cria a pasta Freela, se não existir
             dir.mkdir();
         }
         dir = new File(raizShow);
         if(!dir.exists()) { //cria a pasta Shows, se não existir
+            dir.mkdir();
+        }
+        dir = new File(raizBanda);
+        if(!dir.exists()) { //cria a pasta Banda, se não existir
+            dir.mkdir();
+        }
+        dir = new File(raizMusico);
+        if(!dir.exists()) { //cria a pasta Musico, se não existir
             dir.mkdir();
         }
         else {
