@@ -23,8 +23,8 @@ public class App {
             switch (opcao) {
 
                 case '1': // Cadastrar Banda/Artista
+                    cadastrarBanda(raizBanda, sc);
                     break;
-
                 case '2': // Cadastrar Show
                     cadastrarShow(raizShow, sc);
                     break;
@@ -68,22 +68,31 @@ public class App {
     }
 
     private static void cadastrarBanda(String raizBanda, Scanner sc) {
-        Show s = new Show();
-        s.banda = new Banda();
+        sc.nextLine(); //Limpar buffer
+        Banda b = new Banda();
 
+        //Dados da banda
         System.out.println("Insira o nome da banda: ");
-        s.banda.nome = sc.nextLine();
+        b.nome = sc.nextLine();
         do {
             System.out.println("Insira o cnpj da banda: ");
-            s.banda.cnpj = sc.nextLine();
-            s.banda.cnpj = s.banda.cnpj.replaceAll("\\D", "");//Remove tudo que não for número
-            if (s.banda.cnpj.length() != 14) {
+            b.cnpj = sc.nextLine();
+            b.cnpj = b.cnpj.replaceAll("\\D", "");//Remove tudo que não for número
+            if (b.cnpj.length() != 14) {
                 System.out.println("ERRO! O CNPJ deve conter 14 digitos!");
             }
-        } while (s.banda.cnpj.length() != 14);
-        s.banda.cnpj = Banda.formatarCnpj(s.banda.cnpj);
-        s.banda.id = Banda.gerarIDBanda(s.banda.nome, s.banda.cnpj);
+        } while (b.cnpj.length() != 14);
 
+        //Formatar CNPJ e gerar ID
+        b.cnpj = Banda.formatarCnpj(b.cnpj);
+        b.id = Banda.gerarIDBanda(b.nome, b.cnpj);
+
+        // salvar arquivo
+        if (salvarBanda(raizBanda, b)) {
+            System.out.println("Banda cadastrada com sucesso!");
+        } else {
+            System.out.println("Erro ao gravar o arquivo do banda.");
+        }
     }
 
     private static void cadastrarShow(String raizShow, Scanner sc) {
@@ -277,7 +286,7 @@ public class App {
 
         //CRIANDO ARQUIVO
         s.id = gerarID(s.dataEvento.ano, s.dataEvento.mes, s.dataEvento.dia, s.horarioInicial.hora, s.horarioInicial.minuto);
-        if (criarArquivo(raizShow)) {
+        if (salvarShow(raizShow)) {
             System.out.println("Show cadastrado com sucesso!");
         } else {
             System.out.println("Erro ao gravar o arquivo do show.");
@@ -427,10 +436,34 @@ public class App {
         }
     }
 
-    private static boolean criarArquivo(String raizArquivo) {
-        Show s = new Show();
+    private static boolean salvarBanda(String raizBanda, Banda b) {
+        File pasta = new File(raizBanda);
+        if (!pasta.exists()) {
+            pasta.mkdirs(); //cria diretórios necessários
+        }
 
-        if (raizArquivo.equals("Shows/")) {
+        File f = new File(pasta, b.id + ".txt");
+
+        if (f.exists()) {
+            System.out.println("Essa banda ja está cadastrada!");
+            return false;
+        }
+        try {
+            PrintWriter pw = new PrintWriter(f);
+            pw.append("\n=== DETALHES DA BANDA ===\n");
+            pw.append("Id: " + b.id + "\n");
+            pw.append("Nome da banda: "+b.nome+"\n");
+            pw.append("CNPJ: "+b.cnpj+"\n");
+            pw.close();
+            return true;
+        } catch (FileNotFoundException e) {
+            System.out.println("Erro: arquivo não encontrado.");
+            return false;
+        }
+    }
+
+    private static boolean salvarShow(String raizArquivo) {
+            Show s = new Show();
             File f = new File(raizArquivo + s.id + ".txt");
             if (f.exists()) {
                 System.out.println("Já existe um show cadastrado nesse horário!");
@@ -465,27 +498,6 @@ public class App {
                 System.out.println("Erro: arquivo não encontrado.");
                 return false;
             }
-        } else if (raizArquivo.equals("Bandas/")) {
-            s.banda =  new Banda();
-            File f = new File(raizArquivo + s.banda.id + ".txt");
-            if (f.exists()) {
-                System.out.println("Essa banda ja está cadastrada!");
-                return false;
-            }
-            try {
-                PrintWriter pw = new PrintWriter(raizArquivo + s.banda.id + ".txt");
-                pw.append("\n=== DETALHES DA BANDA ===\n");
-                pw.append("Id: " + s.banda.id + "\n");
-                pw.append("Nome da banda: "+s.banda.nome+"\n");
-                pw.append("CNPJ: "+s.banda.cnpj+"\n");
-                pw.close();
-                return true;
-            } catch (FileNotFoundException e) {
-                System.out.println("Erro: arquivo não encontrado.");
-                return false;
-            }
-        }
-        return true; //APAGAR DEPOIS
     }
 
     private static String lerSN(Scanner sc) {
