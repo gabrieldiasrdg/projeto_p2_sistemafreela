@@ -28,16 +28,15 @@ public class App {
                 case '2': // Cadastrar Show
                     cadastrarShow(raizShow, sc);
                     break;
-
                 case '3': // Cadastrar Músico
+                    cadastrarMusico(raizMusico, sc);
                     break;
-
-                case '4': // Atualizar Show
+                case '4': // Registrar Músico em algum show
                     String funcaoAtualizar = "atualizar";
                     listarShows(raizShow, funcaoAtualizar, sc);
                     break;
 
-                case '5': // Excluir Show/Músico
+                case '5': // Excluir Show/Músico/Banda
                     break;
 
                 case '6': // Listar Shows Pendentes
@@ -79,7 +78,7 @@ public class App {
             b.cnpj = sc.nextLine();
             b.cnpj = b.cnpj.replaceAll("\\D", "");//Remove tudo que não for número
             if (b.cnpj.length() != 14) {
-                System.out.println("ERRO! O CNPJ deve conter 14 digitos!");
+                System.out.println("ERRO! O CNPJ deve conter 14 digitos inteiros!");
             }
         } while (b.cnpj.length() != 14);
 
@@ -95,7 +94,118 @@ public class App {
         }
     }
 
+    private static void cadastrarMusico(String raizMusico, Scanner sc) {
+        sc.nextLine(); //Limpar buffer
+        Musico m = new Musico();
+
+        //Dados do musico
+
+        //NOME
+        System.out.println("Insira o nome do músico: ");
+        m.nome = sc.nextLine();
+
+        //Quantidade de instrumentos que o músico toca
+        boolean ehInteiro = false;//Validar entrada
+        do {
+            try {
+                do {
+                    System.out.println("Insira a quantidade de instrumentos que "+m.nome+" toca: ");
+                    m.nInstrumentosToca = sc.nextInt();
+                    ehInteiro = true;
+                    if (m.nInstrumentosToca > 8 || m.nInstrumentosToca < 1) {
+                        System.out.println("ERRO: Insira um valor válido! (Entre 1 a 8)");
+                    }
+                } while (m.nInstrumentosToca > 8 || m.nInstrumentosToca <1);
+            } catch (InputMismatchException e) {
+                System.out.print("\n--------------------\n");
+                System.out.print("Erro: Digite apenas números inteiros.");
+                System.out.print("\n--------------------\n");
+                sc.nextLine(); // Limpa o buffer após o erro
+            }
+        }while (!ehInteiro);
+
+        System.out.println();
+
+        //Atribuir os instrumentos ao músico
+        Instrumentos inst =  new Instrumentos();
+        m.instrumentoDoMusico = new String[m.nInstrumentosToca];
+        int op = 0;
+        boolean concluido = false;
+        do {
+            boolean[] jaEscolhido = new boolean[8];
+            try {
+                for (int i = 0; i < m.nInstrumentosToca; i++) {
+                    boolean escolhidoValido = false;
+                    while (!escolhidoValido) {
+                        System.out.printf("Insira o %dº instrumento que %s toca:%n", i + 1, m.nome);
+                        menuInstrumentos();
+                        op = sc.nextInt();
+                        if (op < 1 || op > 8) {
+                            System.out.println("ERRO: Digite um valor entre 1 e 8!");
+                            continue; //repete o loop do zero
+                        }
+                        if (jaEscolhido[op - 1]) {
+                            System.out.println("Instrumento já selecionado! Escolha outro.");
+                            continue; //repete o loop do zero
+                        }
+                        // Se chegou aqui: instrumento válido e ainda não escolhido
+                        m.instrumentoDoMusico[i] = inst.instrumentoRequeridos[op - 1];
+                        jaEscolhido[op - 1] = true;
+                        escolhidoValido = true;
+                    }
+                }
+                concluido = true;
+            } catch (InputMismatchException e) {
+                System.out.print("\n--------------------\n");
+                System.out.print("Erro: Digite apenas números inteiros.");
+                System.out.print("\n--------------------\n");
+                sc.nextLine(); // Limpa o buffer após o erro
+            }
+        } while (!concluido);
+
+        //Inserir o número de registro
+        String registroParaTeste = "";
+        concluido = false;
+        do {
+            try {
+                do {
+                    System.out.printf("Insira o número de registro de %s: %n", m.nome);
+                    m.registro = sc.nextInt();
+                    registroParaTeste = String.valueOf(m.registro);
+                    if (Musico.existeRegistro(registroParaTeste, raizMusico)) {
+                        System.out.println("Este número de registro já existe! Insira um outro!");
+                    }
+                    if (m.registro < 0) {
+                        System.out.println("O registro não pode ser negativo.");
+                    }
+                } while (Musico.existeRegistro(registroParaTeste, raizMusico) || m.registro < 0);
+                concluido = true;
+            } catch (InputMismatchException e) {
+                System.out.print("\n--------------------\n");
+                System.out.print("Erro: Digite apenas números inteiros.");
+                System.out.print("\n--------------------\n");
+                sc.nextLine(); //limpa buffer
+            }
+        } while (!concluido);
+
+        //Gerar ID
+        String nomeSemEspaco = m.nome.trim().replaceAll("\\s+", "_");
+        m.id = Musico.gerarIDMusico(nomeSemEspaco, m.registro);
+
+        // salvar arquivo
+        if (salvarMusico(raizMusico, m)) {
+            System.out.println("Músico cadastrado com sucesso!");
+        } else {
+            System.out.println("Erro ao gravar o arquivo do músico.");
+        }
+    }
+
     private static void cadastrarShow(String raizShow, Scanner sc) {
+        File pasta = new File("Freela/Bandas/");
+        if (pasta.listFiles().length == 0) {
+            System.out.println("Você precisa ter bandas cadastradas antes de tentar cadastrar algum show!");
+            return;
+        }
         Show s = new Show();
         s.dataEvento = new Data();
         s.enderecoEvento = new Endereco();
@@ -462,6 +572,31 @@ public class App {
         }
     }
 
+    private static boolean salvarMusico(String raizMusico, Musico m) {
+        File pasta = new File(raizMusico);
+        if (!pasta.exists()) {
+            pasta.mkdirs(); //cria diretórios necessários
+        }
+
+        File f = new File(pasta, m.id + ".txt");
+
+        try {
+            PrintWriter pw = new PrintWriter(f);
+            pw.append("\n=== DETALHES DO MÚSICO ===\n");
+            pw.append("Id: " + m.id + "\n");
+            pw.append("Nome do Músico: "+m.nome+"\n");
+            pw.append("Instrumentos de competência do músico:\n");
+            for (int i = 0; i < m.nInstrumentosToca; i++) {
+                pw.append(m.instrumentoDoMusico[i]+"\n");
+            }
+            pw.close();
+            return true;
+        } catch (FileNotFoundException e) {
+            System.out.println("Erro: arquivo não encontrado.");
+            return false;
+        }
+    }
+
     private static boolean salvarShow(String raizArquivo) {
             Show s = new Show();
             File f = new File(raizArquivo + s.id + ".txt");
@@ -518,20 +653,25 @@ public class App {
         File dir = new File(raiz);
         if(!dir.exists()){ //cria a pasta Freela, se não existir
             dir.mkdir();
+        } else {
+            apagarArquivos(dir);
         }
         dir = new File(raizShow);
         if(!dir.exists()) { //cria a pasta Shows, se não existir
             dir.mkdir();
+        } else {
+            apagarArquivos(dir);
         }
         dir = new File(raizBanda);
         if(!dir.exists()) { //cria a pasta Banda, se não existir
             dir.mkdir();
+        } else {
+            apagarArquivos(dir);
         }
         dir = new File(raizMusico);
         if(!dir.exists()) { //cria a pasta Musico, se não existir
             dir.mkdir();
-        }
-        else {
+        } else {
             apagarArquivos(dir);
         }
 
@@ -568,8 +708,8 @@ public class App {
                         "\n1) Cadastrar Banda/Artista" +
                         "\n2) Cadastrar Show" +
                         "\n3) Cadastrar Músico" +
-                        "\n4) Atualizar Show" +
-                        "\n5) Excluir Show/Músico" +
+                        "\n4) Registrar Músico em algum show" +
+                        "\n5) Excluir Show/Músico/Banda" +
                         "\n6) Listar Shows Pendentes" +
                         "\n7) Listar Músicos" +
                         "\n8) Listar Bandas" +

@@ -1,0 +1,7 @@
+
+=== DETALHES DO MÚSICO ===
+Id: Gabriel_44
+Nome do Músico: Gabriel
+Instrumentos de competência do músico:
+guitarra
+cajon

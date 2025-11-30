@@ -5,7 +5,8 @@ public class Show {
     Hora horarioInicial;
     Hora horarioFinal;
     String infoAdicionais;
-    Musico musico;
-    Banda banda;
-    Instrumentos  instrumentos;
+
+    Banda banda; //quem foi contratada pro show
+    Instrumentos  instrumentos; //o que o show precisa
+    Integrantes[] integrantes; //músicos que foram atribuídos
 }

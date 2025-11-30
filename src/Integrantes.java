@@ -1,6 +1,4 @@
 public class Integrantes {
-    public static void main(String[] args) {
-        Musico musico;
-        Instrumentos[] instrumentos;
-    }
+    Musico musico; //quem é o músico
+    Instrumentos instrumentos; //qual instrumento ele vai tocar nesse show
 }
