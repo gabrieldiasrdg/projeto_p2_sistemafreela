@@ -32,16 +32,16 @@ public class App {
                     cadastrarMusico(raizMusico, sc);
                     break;
                 case '4': // Registrar Músico em algum show
-                    String funcaoAtualizar = "atualizar";
-                    listarShows(raizShow, funcaoAtualizar, sc);
+                    String registrarMusico = "registrar";
+                    listarShows(raizShow, registrarMusico, sc);
                     break;
 
                 case '5': // Excluir Show/Músico/Banda
+                    String excluirShow = "Excluir";
                     break;
 
                 case '6': // Listar Shows Pendentes
                     break;
-
                 case '7': // Listar Músicos
                     break;
 
@@ -382,6 +382,7 @@ public class App {
 
             salvaCache[idx] = s.instrumentos.valorCache[idx]; // Armazena o cache para uso futuro
             s.instrumentos.contInstrumentos[idx]++;// Incrementa quantidade daquele instrumento específico
+            s.instrumentos.contInstrumentosFaltantes = s.instrumentos.contInstrumentos;
 
         }
 
@@ -396,11 +397,25 @@ public class App {
 
         //CRIANDO ARQUIVO
         s.id = gerarID(s.dataEvento.ano, s.dataEvento.mes, s.dataEvento.dia, s.horarioInicial.hora, s.horarioInicial.minuto);
-        if (salvarShow(raizShow)) {
+        if (salvarShow(raizShow, s)) {
             System.out.println("Show cadastrado com sucesso!");
         } else {
             System.out.println("Erro ao gravar o arquivo do show.");
         }
+    }
+
+    private static void registrarMusico(Scanner sc, File arquivo) {
+
+
+    }
+
+    //FILTROS
+
+    private static void filtrarMusicosPorInstrmento(Scanner sc, File arquivo) {
+
+    }
+    private static void filtrarShowsPorInstrmento(File arquivo) {
+
     }
 
     private static void atualizarShow(String raizShow, File[] arquivos, Scanner sc) {
@@ -473,11 +488,11 @@ public class App {
         String op = "";
 
         existe = existeArquivo(dir);
-
         if (!existe) {
             System.out.println("Nenhum show cadastrado ainda!");
         } else {
             File[] arquivos = dir.listFiles();
+            System.out.println("Shows cadastrados: ");
             listarArquivos(arquivos);
             if (funcao.equals("visualizar")) {
                 visualizarShows(raizShow, arquivos, sc);
@@ -485,12 +500,15 @@ public class App {
                 excluirShow(arquivos, sc);
             } else if (funcao.equals("atualizar")) {
                 atualizarShow(raizShow, arquivos, sc);
+            } else if (funcao.equals("registrar")) {
+                return;
             }
 
             System.out.println("Voltando ao menu principal...\n");
 
         }
     }
+
 
     private static String visualizarShows(String raizShow, File[] arquivos, Scanner sc) {
         String op = "";
@@ -521,7 +539,6 @@ public class App {
     }
 
     private static void listarArquivos(File[] arquivos) {
-        System.out.println("Shows cadastrados: ");
         for (int i = 0; i < arquivos.length; i++) {
             System.out.printf("%d) %s\n", i + 1, arquivos[i].getName());
         }
@@ -597,8 +614,7 @@ public class App {
         }
     }
 
-    private static boolean salvarShow(String raizArquivo) {
-            Show s = new Show();
+    private static boolean salvarShow(String raizArquivo, Show s) {
             File f = new File(raizArquivo + s.id + ".txt");
             if (f.exists()) {
                 System.out.println("Já existe um show cadastrado nesse horário!");
@@ -619,10 +635,10 @@ public class App {
                     if(s.instrumentos.contInstrumentos[i]>0) {
                         if (s.instrumentos.contInstrumentos[i]>1){
                             for (int j = 0; j < s.instrumentos.contInstrumentos[i] ; j++) {
-                                pw.append(String.format("- %s %d: Pendente | R$%.2f%n", s.instrumentos.contInstrumentos[i], j+1, s.instrumentos.valorCache[i]));
+                                pw.append(String.format("- %s %d: Pendente | R$%.2f%n",s.instrumentos.instrumentoRequeridos[i] ,s.instrumentos.contInstrumentos[i], s.instrumentos.valorCache[i]));
                             }
                         } else {
-                            pw.append(String.format("- %s: Pendente | R$%.2f%n", s.instrumentos.contInstrumentos[i], s.instrumentos.valorCache[i]));
+                            pw.append(String.format("- %s %d: Pendente | R$%.2f%n",s.instrumentos.instrumentoRequeridos[i] ,s.instrumentos.contInstrumentos[i], s.instrumentos.valorCache[i]));
                         }
                     }
                 }
