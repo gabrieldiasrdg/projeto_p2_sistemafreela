@@ -14,7 +14,7 @@ public class Musico {
             String nome = arquivos[i].getName(); //Pega o nome doa rquivo todo
             nome = nome.replace(".txt", ""); //retira o txt
             String[] partes = nome.split("_"); //Divide em duas partes, uma antes do '_' e outra depois;
-            String registroNoArquivo = partes[1]; //pega a parte do nnúmero
+            String registroNoArquivo = partes[1]; //pega a parte do número
             if (registroNoArquivo.equals(registro)) {
                 return true;
             }
@@ -23,6 +23,7 @@ public class Musico {
     }
 
     public static String gerarIDMusico(String nome, int registro) {
+        nome = nome.replace(" ", "").toUpperCase();
         String id = String.format("%s_%d", nome, registro);
         return id;
     }

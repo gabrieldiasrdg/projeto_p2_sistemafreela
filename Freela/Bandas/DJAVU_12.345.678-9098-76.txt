@@ -1,0 +1,5 @@
+
+=== DETALHES DA BANDA ===
+Id: DJAVU_12.345.678-9098-76
+Nome da banda: djavu
+CNPJ: 12.345.678-9098-76

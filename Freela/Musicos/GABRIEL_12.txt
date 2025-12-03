@@ -1,7 +1,7 @@
 
 === DETALHES DO MÚSICO ===
-Id: Gabriel_44
+Id: GABRIEL_12
 Nome do Músico: Gabriel
 Instrumentos de competência do músico:
-guitarra
-cajon
+sanfona
+bateria

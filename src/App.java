@@ -1,6 +1,4 @@
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.InputMismatchException;
@@ -62,8 +60,6 @@ public class App {
             }
 
         } while (opcao != '0');
-
-
     }
 
     private static void cadastrarBanda(String raizBanda, Scanner sc) {
@@ -390,13 +386,12 @@ public class App {
 
         //INFORMAÇÕES ADICIONAIS
         System.out.println("INSIRA AS INFORMAÇÕES ADICIONAIS SOBRE O SHOW(OPCIONAL): ");
-        sc.nextLine(); // limpar o buffer
         s.infoAdicionais = sc.nextLine();
 
         System.out.println();
 
         //CRIANDO ARQUIVO
-        s.id = gerarID(s.dataEvento.ano, s.dataEvento.mes, s.dataEvento.dia, s.horarioInicial.hora, s.horarioInicial.minuto);
+        s.id = Show.gerarID(s.dataEvento.ano, s.dataEvento.mes, s.dataEvento.dia, s.horarioInicial.hora, s.horarioInicial.minuto);
         if (salvarShow(raizShow, s)) {
             System.out.println("Show cadastrado com sucesso!");
         } else {
@@ -404,9 +399,70 @@ public class App {
         }
     }
 
-    private static void registrarMusico(Scanner sc, File arquivo) {
+    private static void registrarMusico(String raizShow ,File arquivo) {
+        String nomeArquivo = arquivo.getName();
+        recuperarInfoShow(raizShow, nomeArquivo);
 
+    }
 
+    private static Show recuperarInfoShow(String raizShow, String nomeArquivo){
+        Show s = new Show();
+        try {
+            BufferedReader br=new BufferedReader(new FileReader(raizShow+nomeArquivo));
+
+            br.readLine(); //Pula "=== DETALHES DO SHOW ==="
+
+            //ID
+            s.id = br.readLine();
+
+            //DATA
+            String linha = br.readLine();
+            String data = linha.substring(linha.indexOf(":") + 2);
+            String[] partesData = data.split("/");
+            s.dataEvento = new Data();
+            s.dataEvento.dia = Integer.parseInt(partesData[0]);
+            s.dataEvento.mes = Integer.parseInt(partesData[1]);
+            s.dataEvento.ano = Integer.parseInt(partesData[2]);
+
+            //HORÁRIO
+            linha = br.readLine();
+            String horarios = linha.substring(linha.indexOf(":") + 2);
+            String[] partesHor = horarios.split("-");
+            String inicio = partesHor[0].trim();
+            String fim = partesHor[1].trim();
+            s.horarioInicial = new Hora();
+            s.horarioInicial.hora = Integer.parseInt(inicio.substring(0, inicio.indexOf("h")));
+            s.horarioInicial.minuto = Integer.parseInt(inicio.substring(inicio.indexOf("h") + 1, inicio.indexOf("min")));
+
+            c.descricao=br.readLine();
+            c.data=new Data();
+            c.data.dia=Integer.parseInt(br.readLine());
+            c.data.mes=Integer.parseInt(br.readLine());
+            c.data.ano=Integer.parseInt(br.readLine());
+            c.horario=new Hora();
+            c.horario.hora=Integer.parseInt(br.readLine());
+            c.horario.minuto=Integer.parseInt(br.readLine());
+            c.contatos=new Contato[20];
+            for(int i=0; i<20;i++) {
+                String idContato=br.readLine();
+                if(idContato==null) { //finalizaram os contatos
+                    break;
+                }
+                Contato contato=new Contato();
+                contato.id=Integer.parseInt(idContato);
+                contato=leContato(contato.id,raizContatos);
+                c.contatos[i]=contato;
+            }
+            br.close();
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        return s;
     }
 
     //FILTROS
@@ -485,7 +541,7 @@ public class App {
     private static void listarShows(String raizShow, String funcao, Scanner sc) {
         boolean existe;
         File dir = new File(raizShow);
-        String op = "";
+        int op = 0;
 
         existe = existeArquivo(dir);
         if (!existe) {
@@ -501,6 +557,11 @@ public class App {
             } else if (funcao.equals("atualizar")) {
                 atualizarShow(raizShow, arquivos, sc);
             } else if (funcao.equals("registrar")) {
+                do {
+                    System.out.println("Insira o número correspondente ao show você deseja registrar o músico: ");
+                    op = sc.nextInt()+1;
+                } while (op<0 || op >= arquivos.length);
+                registrarMusico(raizShow, arquivos[op]);
                 return;
             }
 
@@ -571,11 +632,28 @@ public class App {
 
         File f = new File(pasta, b.id + ".txt");
 
-        if (f.exists()) {
+        if (f.exists()) { //TESTA SE O NOME INTEIRO DA BANDA JA EXISTE
             System.out.println("Essa banda ja está cadastrada!");
             return false;
         }
-        try {
+
+        File[] arquivos = pasta.listFiles(); //VETOR DAS BANDAS QUE JÁ EXISTEM
+        for (int i = 0; i < arquivos.length; i++) { //Percorre todas as bandas
+            File arquivosExistentes = arquivos[i]; //Captura cada arquivo das bandas
+            String nome = arquivosExistentes.getName(); //Captura o nome do arquivo(id da banda) existente
+            String parteDoId = nome.substring(0, nome.indexOf("_")); //Captura o NOME da banda
+            if(parteDoId.equals(b.nome)) { //Testa se é igual a atual
+                System.out.println("Já foi cadastrada uma banda com este nome!");
+                return false;
+            }
+            parteDoId = nome.substring(nome.indexOf("_") + 1, nome.lastIndexOf(".")); //Captura o CNPJ da banda existente
+            if(parteDoId.equals(b.cnpj)) { //Testa se é igual a atual
+                System.out.println("Este CNPJ já foi cadastrado em uma outra banda!!");
+                return false;
+            }
+        }
+
+        try { //Se passou pelos testes grava tudo no arquivo
             PrintWriter pw = new PrintWriter(f);
             pw.append("\n=== DETALHES DA BANDA ===\n");
             pw.append("Id: " + b.id + "\n");
@@ -625,7 +703,11 @@ public class App {
                 pw.append("\n=== DETALHES DO SHOW ===\n");
                 pw.append("Id: " + s.id + "\n");
                 pw.append("Data do evento: "+s.dataEvento.dia+"/"+s.dataEvento.mes+"/"+s.dataEvento.ano+"\n");
-                pw.append("Carga horária de show (Início/Fim): "+s.horarioInicial.hora+"h"+s.horarioInicial.minuto+"min"+" - "+s.horarioFinal.hora+"h"+s.horarioFinal.minuto+"min"+"\n");
+                pw.append(String.format("Carga horária de show (Início/Fim): %02dh%02dmin - %02dh%02dmin\n",
+                        s.horarioInicial.hora,
+                        s.horarioInicial.minuto,
+                        s.horarioFinal.hora,
+                        s.horarioFinal.minuto));
                 pw.append("Informações do endereço onde ocorrerá o evento: \n");
                 pw.append("- Cidade: "+s.enderecoEvento.cidade+"\n");
                 pw.append("- Endereço: "+s.enderecoEvento.bairro+", "+s.enderecoEvento.logradouro+", Nº "+s.enderecoEvento.numero+"\n");
@@ -635,10 +717,10 @@ public class App {
                     if(s.instrumentos.contInstrumentos[i]>0) {
                         if (s.instrumentos.contInstrumentos[i]>1){
                             for (int j = 0; j < s.instrumentos.contInstrumentos[i] ; j++) {
-                                pw.append(String.format("- %s %d: Pendente | R$%.2f%n",s.instrumentos.instrumentoRequeridos[i] ,s.instrumentos.contInstrumentos[i], s.instrumentos.valorCache[i]));
+                                pw.append(String.format("- %s %d: PENDENTE | R$%.2f%n",s.instrumentos.instrumentoRequeridos[i] ,s.instrumentos.contInstrumentos[i], s.instrumentos.valorCache[i]));
                             }
                         } else {
-                            pw.append(String.format("- %s %d: Pendente | R$%.2f%n",s.instrumentos.instrumentoRequeridos[i] ,s.instrumentos.contInstrumentos[i], s.instrumentos.valorCache[i]));
+                            pw.append(String.format("- %s %d: PENDENTE | R$%.2f%n",s.instrumentos.instrumentoRequeridos[i] ,s.instrumentos.contInstrumentos[i], s.instrumentos.valorCache[i]));
                         }
                     }
                 }
@@ -660,10 +742,6 @@ public class App {
         return op;
     }
 
-    private static String gerarID(int ano, int mes, int dia, int horaInicio, int minutoInicio) {
-        String id = String.format("%04d%02d%02d_%02d%02d", ano, mes, dia, horaInicio, minutoInicio);
-        return id;
-    }
 
     private static void iniciarResetar(String raiz, String raizShow, String raizBanda, String raizMusico) {
         File dir = new File(raiz);
