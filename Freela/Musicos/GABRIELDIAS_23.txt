@@ -1,7 +1,7 @@
 
 === DETALHES DO MÚSICO ===
-Id: GABRIEL_DIAS_13
-Nome do Músico: Gabriel Dias
+Id: GABRIELDIAS_23
+Nome do Músico: GabrielDias
 Instrumentos de competência do músico: 2
 guitarra
-sanfona
+violão

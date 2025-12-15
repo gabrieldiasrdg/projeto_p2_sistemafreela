@@ -1,7 +1,0 @@
-
-=== DETALHES DO MÚSICO ===
-Id: CÉSAR_55
-Nome do Músico: César
-Instrumentos de competência do músico: 2
-teclado
-sanfona
