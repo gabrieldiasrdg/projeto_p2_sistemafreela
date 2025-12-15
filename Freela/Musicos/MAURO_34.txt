@@ -1,0 +1,8 @@
+
+=== DETALHES DO MÚSICO ===
+Id: MAURO_34
+Nome do Músico: MAuro
+Instrumentos de competência do músico: 3
+bateria
+baixo
+percussão

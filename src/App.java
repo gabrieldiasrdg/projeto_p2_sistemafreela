@@ -31,7 +31,7 @@ public class App {
                     break;
                 case '4': // Registrar Músico em algum show
                     String registrarMusico = "registrar";
-                    listarShows(raizShow, registrarMusico, sc);
+                    listarShows(raizShow, raizMusico, registrarMusico, sc);
                     break;
 
                 case '5': // Excluir Show/Músico/Banda
@@ -378,7 +378,6 @@ public class App {
 
             salvaCache[idx] = s.instrumentos.valorCache[idx]; // Armazena o cache para uso futuro
             s.instrumentos.contInstrumentos[idx]++;// Incrementa quantidade daquele instrumento específico
-            s.instrumentos.contInstrumentosFaltantes = s.instrumentos.contInstrumentos;
 
         }
 
@@ -399,10 +398,114 @@ public class App {
         }
     }
 
-    private static void registrarMusico(String raizShow ,File arquivo) {
+    private static void registrarMusico(String raizShow , String raizMusico, File arquivo, Scanner sc) {
         String nomeArquivo = arquivo.getName();
-        recuperarInfoShow(raizShow, nomeArquivo);
+        imprimirArquivo(raizShow, nomeArquivo);
+        Show s = recuperarInfoShow(raizShow, nomeArquivo);
 
+
+        //OPÇÕES DISPONÍVEIS
+        int i = 0;          // índice das OPÇÕES exibidas (somente pendentes)
+        int k = 0;          // índice do tipo de instrumento (0..7)
+        int slotGlobal = 0; // índice global da vaga (0..quantidadeInstrumentosRequeridos-1)
+
+        String[] salvaInstrumentosShow = new String[s.instrumentos.quantidadeInstrumentosRequeridos];
+        Double[] salvaCache = new Double[s.instrumentos.quantidadeInstrumentosRequeridos];
+
+        System.out.println("Insira o valor correspondente ao instrumento que você deseja registrar o músico: ");
+
+        while (k < s.instrumentos.instrumentoRequeridos.length && slotGlobal < s.instrumentos.quantidadeInstrumentosRequeridos) {
+
+            int qtd = (int) Math.round(s.instrumentos.contInstrumentos[k]); // (ideal: contInstrumentos ser int[])
+            if (qtd > 0) {
+                for (int j = 0; j < qtd && slotGlobal < s.instrumentos.quantidadeInstrumentosRequeridos; j++) {
+
+                    if (s.instrumentos.vagaPendente[slotGlobal]) {
+                        System.out.printf("%d - %s %d: PENDENTE%n", i + 1, s.instrumentos.instrumentoRequeridos[k], j + 1);
+
+                        salvaInstrumentosShow[i] = s.instrumentos.instrumentoRequeridos[k];
+                        salvaCache[i] = s.instrumentos.valorCache[k];
+                        i++; // só incrementa quando MOSTRA opção
+                    }
+
+                    slotGlobal++; // sempre avança a vaga global (pendente ou não)
+                }
+            }
+
+            k++;
+        }
+
+
+        int op = 0;
+
+        do {
+            try {
+                System.out.println("R= ");
+                op = sc.nextInt()-1;
+                if (op < 0 || op >= s.instrumentos.quantidadeInstrumentosRequeridos) {
+                    System.out.println("Insira apenas valores válidos!");
+                }
+            } catch (ArithmeticException e) {
+                System.out.print("\n--------------------\n");
+                System.out.print("Erro: Digite apenas números inteiros!");
+                System.out.print("\n--------------------\n");
+            }
+        } while(op < 0 || op >= s.instrumentos.quantidadeInstrumentosRequeridos);
+
+        //FILTRO POR INSTRUMENTOS E SELECIONAR MÚSICOS
+        String instrumentoEscolhido = salvaInstrumentosShow[op];
+        String[] musicosFiltrados = new String[50];
+        System.out.println("Selecione o músico que deseja atribuir ao instrumento: ");
+        int cont = filtrarMusicosPorInstrumento(sc, raizMusico, s, instrumentoEscolhido, musicosFiltrados);
+        if(musicosFiltrados[0] == null) {
+            System.out.println("Nenhum músico registrado toca este instrumento!");
+            return;
+        } else {
+            do {
+                try {
+                    System.out.println("R= ");
+                    op = sc.nextInt() - 1;
+                    if (op < 0 || op >= cont - 1) {
+                        System.out.println("Insira apenas valores válidos!");
+                    }
+                } catch (ArithmeticException e) {
+                    System.out.print("\n--------------------\n");
+                    System.out.print("Erro: Digite apenas números inteiros!");
+                    System.out.print("\n--------------------\n");
+                }
+            } while (op < 0 || op >= s.instrumentos.quantidadeInstrumentosRequeridos);
+        }
+
+        //REGISTRAR O MÚSICO NA POSIÇÃO
+        File f = new File(raizShow + s.id + ".txt");
+        try {
+            PrintWriter pw = new PrintWriter(raizShow + s.id + ".txt");
+            pw.append("\n=== DETALHES DO SHOW ===\n");
+            pw.append("Id: " + s.id + "\n");
+            pw.append("Data do evento: "+s.dataEvento.dia+"/"+s.dataEvento.mes+"/"+s.dataEvento.ano+"\n");
+            pw.append(String.format("Carga horária de show (Início/Fim): %02dh%02dmin - %02dh%02dmin\n",
+                    s.horarioInicial.hora,
+                    s.horarioInicial.minuto,
+                    s.horarioFinal.hora,
+                    s.horarioFinal.minuto));
+            pw.append("Informações do endereço onde ocorrerá o evento: \n");
+            pw.append("- Cidade: "+s.enderecoEvento.cidade+"\n");
+            pw.append("- Endereço: "+s.enderecoEvento.bairro+", "+s.enderecoEvento.logradouro+", Nº "+s.enderecoEvento.numero+"\n");
+            pw.append("- Complemento: "+s.enderecoEvento.complemento+"\n");
+            pw.append("Instrumentos requeridos: "+s.instrumentos.quantidadeInstrumentosRequeridos+"\n");
+            for (int j = 0; j < s.instrumentos.quantidadeInstrumentosRequeridos; j++) {
+                if(j == op) {
+                    pw.append(String.format("- %s %d: %s | R$%.2f%n",salvaInstrumentosShow[j] , j+1, musicosFiltrados[op] ,salvaCache[j]));
+                } else {
+                    pw.append(String.format("- %s %d: PENDENTE | R$%.2f%n",salvaInstrumentosShow[j] ,j+1, salvaCache[j]));
+                }
+            }
+            pw.append("Informações adicionais: "+ s.infoAdicionais+"\n");
+            pw.close();
+            s.instrumentos.vagaPendente[op] = false;
+        } catch (FileNotFoundException e) {
+            System.out.println("Erro: arquivo não encontrado.");
+        }
     }
 
     private static Show recuperarInfoShow(String raizShow, String nomeArquivo){
@@ -410,13 +513,15 @@ public class App {
         try {
             BufferedReader br=new BufferedReader(new FileReader(raizShow+nomeArquivo));
 
+            br.readLine();
             br.readLine(); //Pula "=== DETALHES DO SHOW ==="
 
             //ID
-            s.id = br.readLine();
+            String linha = br.readLine();
+            s.id = linha.substring(linha.indexOf(":") + 2);
 
             //DATA
-            String linha = br.readLine();
+            linha = br.readLine();
             String data = linha.substring(linha.indexOf(":") + 2);
             String[] partesData = data.split("/");
             s.dataEvento = new Data();
@@ -433,26 +538,63 @@ public class App {
             s.horarioInicial = new Hora();
             s.horarioInicial.hora = Integer.parseInt(inicio.substring(0, inicio.indexOf("h")));
             s.horarioInicial.minuto = Integer.parseInt(inicio.substring(inicio.indexOf("h") + 1, inicio.indexOf("min")));
+            s.horarioFinal = new Hora();
+            s.horarioFinal.hora = Integer.parseInt(fim.substring(0, fim.indexOf("h")));
+            s.horarioFinal.minuto = Integer.parseInt(fim.substring(fim.indexOf("h") + 1, fim.indexOf("min")));
 
-            c.descricao=br.readLine();
-            c.data=new Data();
-            c.data.dia=Integer.parseInt(br.readLine());
-            c.data.mes=Integer.parseInt(br.readLine());
-            c.data.ano=Integer.parseInt(br.readLine());
-            c.horario=new Hora();
-            c.horario.hora=Integer.parseInt(br.readLine());
-            c.horario.minuto=Integer.parseInt(br.readLine());
-            c.contatos=new Contato[20];
-            for(int i=0; i<20;i++) {
-                String idContato=br.readLine();
-                if(idContato==null) { //finalizaram os contatos
-                    break;
+            br.readLine(); //"Informações do endereço onde ocorrerá o evento:"
+
+            //ENDEREÇO
+            s.enderecoEvento = new Endereco();
+            linha = br.readLine(); //CIDADE
+            s.enderecoEvento.cidade = linha.substring(linha.indexOf(":") + 2).trim();
+            linha = br.readLine(); //ENDEREÇO
+            String endSemLabel = linha.substring(linha.indexOf(":") + 2).trim(); //"Cenro, rua formosa, Nº 12"
+            int primeiraVirgula = endSemLabel.indexOf(",");
+            int ultimaVirgula   = endSemLabel.lastIndexOf(",");
+            s.enderecoEvento.bairro = endSemLabel.substring(0, primeiraVirgula).trim();                  //"Cenro"
+            s.enderecoEvento.logradouro = endSemLabel.substring(primeiraVirgula + 1, ultimaVirgula).trim(); //"rua formosa"
+            String numStr = endSemLabel.substring(endSemLabel.indexOf("Nº") + 2).trim(); // "12"
+            s.enderecoEvento.numero = Integer.parseInt(numStr);
+            linha = br.readLine(); //COMPLEMENTO
+            s.enderecoEvento.complemento = linha.substring(linha.indexOf(":") + 2).trim();
+
+            //CAPTURAR QUANTIDADE TOTAL DE INSTRUMENTOS
+            linha = br.readLine();
+            int numeroDeInstrumentos = Integer.parseInt(linha.substring(linha.indexOf(":") + 1).trim());
+            s.instrumentos = new Instrumentos();
+            s.instrumentos.quantidadeInstrumentosRequeridos = numeroDeInstrumentos;
+
+            //INSTRUMENTOS
+            for (int i = 0; i < numeroDeInstrumentos; i++) { //Laço para passar por cada linha pegando cada instrumento e cada cachê
+                linha =  br.readLine(); //ex: "- instrumento 1: PENDENTE | R$valor"
+                String status =  linha.substring(linha.indexOf(":") + 2, linha.lastIndexOf("|")).trim(); //Pega a parte de pendente/id do músico
+                String instrumentoAtual = linha.substring(linha.indexOf("-") + 2,  linha.indexOf(":")-2).trim(); //pega o instrumento atual
+                int posR = linha.indexOf("R$");
+                int valorCache = Integer.parseInt(linha.substring(posR + 2, linha.indexOf(",", posR)).trim()); //Pega o valor do cachê
+                for (int j = 0; j < s.instrumentos.instrumentoRequeridos.length; j++) { //Laço para comparar com o vetor de instrumentos
+                    if (s.instrumentos.instrumentoRequeridos[j].equalsIgnoreCase(instrumentoAtual)) { //Se o instrumento do vetor for igual ao da linha, ele entra e aumenta o cont instrumentos
+                        s.instrumentos.contInstrumentos[j]++;
+                        //Se a vaga estiver pendente
+                        if (status.equalsIgnoreCase("PENDENTE")) {
+                            s.instrumentos.vagaPendente[i] = true;
+                        } else {
+                            s.instrumentos.vagaPendente[i] = false;
+                        }
+                        // se ainda não tinha valor definido, define agora
+                        if (s.instrumentos.valorCache[j] == null || s.instrumentos.valorCache[j] == 0) {
+                            s.instrumentos.valorCache[j] = (double) valorCache;
+                        }
+                        break; //Quebra pra ir pra próxima linha
+                    }
                 }
-                Contato contato=new Contato();
-                contato.id=Integer.parseInt(idContato);
-                contato=leContato(contato.id,raizContatos);
-                c.contatos[i]=contato;
             }
+
+            //INFORMAÇÕES ADICIONAIS
+            linha =  br.readLine();
+            s.infoAdicionais = linha.substring(linha.indexOf(":") + 2).trim();
+
+            //FINALIZA
             br.close();
         } catch (FileNotFoundException e) {
             // TODO Auto-generated catch block
@@ -461,15 +603,82 @@ public class App {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-
         return s;
     }
 
     //FILTROS
 
-    private static void filtrarMusicosPorInstrmento(Scanner sc, File arquivo) {
+    private static int filtrarMusicosPorInstrumento(Scanner sc, String raizMusico, Show s, String instrumentoDesejado, String[] musicosFiltrados) {
+        boolean existe;
+        File dir = new File(raizMusico);
+        File[] arquivos = dir.listFiles();
+        int cont = 1;
+
+        existe = existeArquivo(dir);
+        if (!existe) {
+            System.out.println("Nenhum músico cadastrado ainda!");
+        } else {
+            for (int i = 0; i < arquivos.length; i++) {
+                try {
+                    BufferedReader br = new BufferedReader(new FileReader(arquivos[i])); //captura os arquivos um por um
+                    String id = arquivos[i].getName();
+                    id = id.substring(0, id.indexOf("."));
+                    if(musicoTocaInstrumento(br, instrumentoDesejado)) {
+                        System.out.println(cont +" - "+arquivos[i].getName());
+                        musicosFiltrados[i] = id;
+                        cont++;
+                    }
+                    br.close();
+                } catch (FileNotFoundException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return cont;
 
     }
+    private static boolean musicoTocaInstrumento(BufferedReader br, String instrumentoDesejado) {
+        try {
+            Musico m = new Musico();
+            String linha = br.readLine(); //pula espaço em branco
+            br.readLine();//Pula "=== DETALHES DO MÚSICO ==="
+
+            //PULA ID
+            br.readLine();
+
+            br.readLine(); //pula nome
+            linha = br.readLine(); //captura linha de quantidade de instrumentos
+            m.nInstrumentosToca = Integer.parseInt(linha.substring(linha.indexOf(":") + 1).trim()); //captura a quantidade de instrumentos que o músico toca
+            m.instrumentoDoMusico = new String[m.nInstrumentosToca];
+            if (m.nInstrumentosToca > 1) { //se o músico tocar mais de um instrumento
+                for (int j = 0; j < m.nInstrumentosToca ; j++) { //percorre a quantidade de instrumentos
+                    linha = br.readLine();
+                    m.instrumentoDoMusico[j] =  linha.trim(); //captura o instrumento
+                    if(m.instrumentoDoMusico[j].equalsIgnoreCase(instrumentoDesejado)){
+                        return true;
+                    }
+                }
+            } else {
+                linha = br.readLine();
+                if(linha.trim().equalsIgnoreCase(instrumentoDesejado)){
+                    return true;
+                }
+            }
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     private static void filtrarShowsPorInstrmento(File arquivo) {
 
     }
@@ -538,10 +747,19 @@ public class App {
         }
     }
 
-    private static void listarShows(String raizShow, String funcao, Scanner sc) {
+    private static void listarShows(String raizShow, String raizMusico, String funcao, Scanner sc) {
         boolean existe;
         File dir = new File(raizShow);
+        File dirMusicos =  new File(raizMusico);
+        File[] arquivosMusicos = dirMusicos.listFiles();
         int op = 0;
+
+        if(!existeArquivo(dirMusicos)) {
+            System.out.println("---------------------");
+            System.out.println("Você precisa registrar músicos antes de atribuí-los aos shows!");
+            System.out.println("---------------------");
+            return;
+        }
 
         existe = existeArquivo(dir);
         if (!existe) {
@@ -559,14 +777,12 @@ public class App {
             } else if (funcao.equals("registrar")) {
                 do {
                     System.out.println("Insira o número correspondente ao show você deseja registrar o músico: ");
-                    op = sc.nextInt()+1;
+                    op = sc.nextInt()-1;
                 } while (op<0 || op >= arquivos.length);
-                registrarMusico(raizShow, arquivos[op]);
+                registrarMusico(raizShow, raizMusico, arquivos[op], sc);
                 return;
             }
-
             System.out.println("Voltando ao menu principal...\n");
-
         }
     }
 
@@ -612,7 +828,7 @@ public class App {
     private static void imprimirArquivo(String raizShow, String nomeArquivo) {
         try {
             System.out.println("\n-------------------------");
-            System.out.println("Show: " + nomeArquivo);
+            System.out.println(nomeArquivo);
             Scanner leitor = new Scanner(new File(raizShow+nomeArquivo));
             while (leitor.hasNextLine()) {
                 System.out.println(leitor.nextLine());
@@ -680,7 +896,7 @@ public class App {
             pw.append("\n=== DETALHES DO MÚSICO ===\n");
             pw.append("Id: " + m.id + "\n");
             pw.append("Nome do Músico: "+m.nome+"\n");
-            pw.append("Instrumentos de competência do músico:\n");
+            pw.append("Instrumentos de competência do músico: "+m.nInstrumentosToca+"\n");
             for (int i = 0; i < m.nInstrumentosToca; i++) {
                 pw.append(m.instrumentoDoMusico[i]+"\n");
             }
@@ -712,12 +928,12 @@ public class App {
                 pw.append("- Cidade: "+s.enderecoEvento.cidade+"\n");
                 pw.append("- Endereço: "+s.enderecoEvento.bairro+", "+s.enderecoEvento.logradouro+", Nº "+s.enderecoEvento.numero+"\n");
                 pw.append("- Complemento: "+s.enderecoEvento.complemento+"\n");
-                pw.append("Instrumentos requeridos: "+"\n");
+                pw.append("Instrumentos requeridos: "+s.instrumentos.quantidadeInstrumentosRequeridos+"\n");
                 for(int i = 0; i < s.instrumentos.contInstrumentos.length; i++) {
                     if(s.instrumentos.contInstrumentos[i]>0) {
                         if (s.instrumentos.contInstrumentos[i]>1){
                             for (int j = 0; j < s.instrumentos.contInstrumentos[i] ; j++) {
-                                pw.append(String.format("- %s %d: PENDENTE | R$%.2f%n",s.instrumentos.instrumentoRequeridos[i] ,s.instrumentos.contInstrumentos[i], s.instrumentos.valorCache[i]));
+                                pw.append(String.format("- %s %d: PENDENTE | R$%.2f%n",s.instrumentos.instrumentoRequeridos[i] , j+1, s.instrumentos.valorCache[i]));
                             }
                         } else {
                             pw.append(String.format("- %s %d: PENDENTE | R$%.2f%n",s.instrumentos.instrumentoRequeridos[i] ,s.instrumentos.contInstrumentos[i], s.instrumentos.valorCache[i]));

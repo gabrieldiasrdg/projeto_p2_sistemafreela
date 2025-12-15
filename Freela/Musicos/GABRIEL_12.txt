@@ -1,7 +1,0 @@
-
-=== DETALHES DO MÚSICO ===
-Id: GABRIEL_12
-Nome do Músico: Gabriel
-Instrumentos de competência do músico:
-sanfona
-bateria
