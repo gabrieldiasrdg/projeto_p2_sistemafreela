@@ -33,19 +33,19 @@ public class App {
                     String registrarMusico = "registrar";
                     listarShows(raizShow, raizMusico, registrarMusico, sc);
                     break;
-
                 case '5': // Excluir Show/Músico/Banda
-                    String excluirShow = "Excluir";
+                   menuExclusao(raizShow, raizBanda, raizMusico, sc);
                     break;
-
-                case '6': // Listar Shows Pendentes
+                case '6': // Listar Shows
+                    String vizaulizarShows = "visualizar";
+                    listarShows(raizShow, raizBanda, vizaulizarShows, sc);
                     break;
                 case '7': // Listar Músicos
+                    listarMusicos(raizMusico, sc);
                     break;
-
                 case '8': // Listar Bandas
+                    listarBandas(raizBanda, sc);
                     break;
-
                 case '9': // Iniciar/Resetar
                     iniciarResetar(raiz, raizShow, raizBanda, raizMusico);
                     break;
@@ -61,6 +61,127 @@ public class App {
 
         } while (opcao != '0');
     }
+
+    private static void listarBandas(String raizBanda, Scanner sc) {
+        File dir = new File(raizBanda);
+        File[] arquivos = dir.listFiles();
+
+        if (!existeArquivo(dir)) {
+            System.out.println("Não há bandas cadastrados!");
+        } else {
+            int op = 0;
+            System.out.println("Selecione a banda que você deseja vizualizar: ");
+            listarArquivos(arquivos);//Lista as bandas
+            do {
+                System.out.println("Opção: ");
+                op = sc.nextInt() - 1;
+                if (op < 0 || op > arquivos.length - 1) {
+                    System.out.println("Opção inválida!");
+                }
+            } while (op < 0 || op > arquivos.length - 1);
+            String nomeArquivo = arquivos[op].getName();
+            imprimirArquivo(raizBanda, nomeArquivo);
+        }
+    }
+
+    private static void listarMusicos(String raizMusico, Scanner sc) {
+        File dir = new File(raizMusico);
+        File[] arquivos = dir.listFiles();
+
+        if (!existeArquivo(dir)) {
+            System.out.println("Não há músicos cadastrados!");
+        } else {
+            int op = 0;
+            System.out.println("Selecione a músico que você deseja vizualizar: ");
+            listarArquivos(arquivos); //Lista os músicos
+            do {
+                System.out.println("Opção: ");
+                op = sc.nextInt() - 1;
+                if (op < 0 || op > arquivos.length - 1) {
+                    System.out.println("Opção inválida!");
+                }
+            } while (op < 0 || op > arquivos.length - 1);
+            String nomeArquivo = arquivos[op].getName();
+            imprimirArquivo(raizMusico, nomeArquivo);
+        }
+    }
+
+    private static void menuExclusao(String raizShow, String raizBanda, String raizMusico, Scanner sc) {
+        int op = 0;
+        String funcao = "";
+        do {
+            System.out.println(	"\n-----------------------"
+                    + "\n1) Excluir Show"
+                    + "\n2) Excluir Músico"
+                    + "\n3) Excluir Banda"
+                    + "\n-----------------------");
+            System.out.println("Opção: ");
+            op = sc.nextInt();
+            if (op < 1 || op > 3){
+                System.out.println("Opção inválida!");
+            }
+        } while (op < 1 || op > 3);
+
+        if(op == 1) {
+            funcao = "excluirShow";
+            listarShows(raizShow, raizMusico, funcao, sc);
+        } else if (op == 2) {
+            File dir = new File(raizMusico);
+            File[] arquivos = dir.listFiles();
+
+            if (!existeArquivo(dir)) {
+                System.out.println("Não há músicos cadastrados!");
+            } else {
+                int opMusico = 0;
+                System.out.println("Selecione o músico que você deseja excluir: ");
+                listarArquivos(arquivos);//Lista os musicos
+                do {
+                    System.out.println("Opção: ");
+                    opMusico = sc.nextInt() - 1;
+                    if (opMusico < 0 || opMusico > arquivos.length - 1) {
+                        System.out.println("Opção inválida!");
+                    }
+                } while (opMusico < 0 || opMusico > arquivos.length - 1);
+                excluirMusicoBanda(arquivos, opMusico, sc);
+            }
+        } else if (op == 3) {
+            File dir = new File(raizBanda);
+            File[] arquivos = dir.listFiles();
+
+            if (!existeArquivo(dir)) {
+                System.out.println("Não há bandas cadastrados!");
+            } else {
+                int opBanda = 0;
+                System.out.println("Selecione a banda que você deseja excluir: ");
+                listarArquivos(arquivos);//Lista as bandas
+                do {
+                    System.out.println("Opção: ");
+                    opBanda = sc.nextInt() - 1;
+                    if (opBanda < 0 || opBanda > arquivos.length - 1) {
+                        System.out.println("Opção inválida!");
+                    }
+                } while (opBanda < 0 || opBanda > arquivos.length - 1);
+                excluirMusicoBanda(arquivos, opBanda, sc);
+            }
+        }
+
+    }
+
+    private static void excluirMusicoBanda(File[] arquivos, int opMusico, Scanner sc) {
+        System.out.printf("Tem certeza que deseja excluir '%s'? (S/N)\n", arquivos[opMusico].getName());
+        sc.nextLine();
+        String op = lerSN(sc);
+        if (op.equals("S")) {
+            if (arquivos[opMusico].delete()) {
+                System.out.println("Músico excluído com sucesso!\n");
+            } else {
+                System.out.println("Erro ao tentar excluir o músico.\n");
+            }
+        } else {
+            System.out.println("Exclusão cancelada.\n");
+        }
+    }
+
 
     private static void cadastrarBanda(String raizBanda, Scanner sc) {
         sc.nextLine(); //Limpar buffer
@@ -864,15 +985,7 @@ public class App {
         boolean existe;
         File dir = new File(raizShow);
         File dirMusicos =  new File(raizMusico);
-        File[] arquivosMusicos = dirMusicos.listFiles();
         int op = 0;
-
-        if(!existeArquivo(dirMusicos)) {
-            System.out.println("---------------------");
-            System.out.println("Você precisa registrar músicos antes de atribuí-los aos shows!");
-            System.out.println("---------------------");
-            return;
-        }
 
         existe = existeArquivo(dir);
         if (!existe) {
@@ -883,16 +996,21 @@ public class App {
             listarArquivos(arquivos);
             if (funcao.equals("visualizar")) {
                 visualizarShows(raizShow, arquivos, sc);
-            } else if (funcao.equals("excluir")) {
+            } else if (funcao.equals("excluirShow")) {
                 excluirShow(arquivos, sc);
-            } else if (funcao.equals("atualizar")) {
-                atualizarShow(raizShow, arquivos, sc);
             } else if (funcao.equals("registrar")) {
-                do {
-                    System.out.println("Insira o número correspondente ao show você deseja registrar o músico: ");
-                    op = sc.nextInt()-1;
-                } while (op<0 || op >= arquivos.length);
-                registrarMusico(raizShow, raizMusico, arquivos[op], sc);
+                if(!existeArquivo(dirMusicos)) {
+                    System.out.println("---------------------");
+                    System.out.println("Você precisa registrar músicos antes de atribuí-los aos shows!");
+                    System.out.println("---------------------");
+                    return;
+                } else {
+                    do {
+                        System.out.println("Insira o número correspondente ao show você deseja registrar o músico: ");
+                        op = sc.nextInt() - 1;
+                    } while (op < 0 || op >= arquivos.length);
+                    registrarMusico(raizShow, raizMusico, arquivos[op], sc);
+                }
                 return;
             }
             System.out.println("Voltando ao menu principal...\n");
@@ -938,11 +1056,11 @@ public class App {
         return dir.exists() && dir.listFiles().length > 0;
     }
 
-    private static void imprimirArquivo(String raizShow, String nomeArquivo) {
+    private static void imprimirArquivo(String raizArquivo, String nomeArquivo) {
         try {
             System.out.println("\n-------------------------");
             System.out.println(nomeArquivo);
-            Scanner leitor = new Scanner(new File(raizShow+nomeArquivo));
+            Scanner leitor = new Scanner(new File(raizArquivo+nomeArquivo));
             while (leitor.hasNextLine()) {
                 System.out.println(leitor.nextLine());
             }
