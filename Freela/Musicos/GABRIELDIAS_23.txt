@@ -1,7 +1,0 @@
-
-=== DETALHES DO MÚSICO ===
-Id: GABRIELDIAS_23
-Nome do Músico: GabrielDias
-Instrumentos de competência do músico: 2
-guitarra
-violão

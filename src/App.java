@@ -309,7 +309,7 @@ public class App {
         String nomeSemEspaco = m.nome.trim().replaceAll("\\s+", "_");
         m.id = Musico.gerarIDMusico(nomeSemEspaco, m.registro);
 
-        // salvar arquivo
+        //salvar arquivo
         if (salvarMusico(raizMusico, m)) {
             System.out.println("Músico cadastrado com sucesso!");
         } else {
@@ -547,12 +547,12 @@ public class App {
         }
 
         //Montar as opções (somente vagas pendentes) e mapear opção -> slot real
-        int opcaoExibida = 0;
-        int slotGlobal = 0;
+        int opcaoExibida = 0; //é o índice REAL da vaga no array do show.
+        int slotGlobal = 0; //é o índice REAL da vaga no array do show.
 
-        String[] salvaInstrumentoOpcao = new String[s.instrumentos.quantidadeInstrumentosRequeridos];
-        Double[] salvaCacheOpcao = new Double[s.instrumentos.quantidadeInstrumentosRequeridos];
-        int[] salvaSlotRealOpcao = new int[s.instrumentos.quantidadeInstrumentosRequeridos];
+        String[] salvaInstrumentoOpcao = new String[s.instrumentos.quantidadeInstrumentosRequeridos]; //instrumento mostrado naquela opção
+        Double[] salvaCacheOpcao = new Double[s.instrumentos.quantidadeInstrumentosRequeridos]; //salva o cache
+        int[] salvaSlotRealOpcao = new int[s.instrumentos.quantidadeInstrumentosRequeridos]; //qual o slot real no array do show
 
         System.out.println("\nEscolha a vaga pendente que deseja preencher:");
 
@@ -562,13 +562,7 @@ public class App {
                 if (slotGlobal >= s.instrumentos.quantidadeInstrumentosRequeridos) break;
                 if (s.instrumentos.vagaPendente[slotGlobal]) {
                     double cache = (s.instrumentos.valorCache[tipo] != null) ? s.instrumentos.valorCache[tipo] : 0.0;
-                    System.out.printf(
-                            "%d) %s %d: PENDENTE | R$%.2f%n",
-                            (opcaoExibida + 1),
-                            s.instrumentos.instrumentoRequeridos[tipo],
-                            (j + 1),
-                            cache
-                    );
+                    System.out.printf("%d) %s %d: PENDENTE | R$%.2f%n", (opcaoExibida + 1), s.instrumentos.instrumentoRequeridos[tipo], (j + 1), cache);
                     salvaInstrumentoOpcao[opcaoExibida] = s.instrumentos.instrumentoRequeridos[tipo];
                     salvaCacheOpcao[opcaoExibida] = cache;
                     salvaSlotRealOpcao[opcaoExibida] = slotGlobal;
@@ -583,7 +577,7 @@ public class App {
             return;
         }
 
-        // 3) Escolher a vaga (pela opção exibida)
+        //Escolher a vaga (pela opção exibida)
         int escolhaVaga = -1;
         do {
             try {
@@ -663,19 +657,11 @@ public class App {
             int slot = 0;
             for (int tipo = 0; tipo < s.instrumentos.instrumentoRequeridos.length; tipo++) {
                 int qtd = s.instrumentos.contInstrumentos[tipo];
-
                 for (int j = 0; j < qtd; j++) {
                     if (slot >= s.instrumentos.quantidadeInstrumentosRequeridos) break;
-
                     double cache = (s.instrumentos.valorCache[tipo] != null) ? s.instrumentos.valorCache[tipo] : 0.0;
-                    String status = s.instrumentos.statusVaga[slot]; // "PENDENTE" ou "ID_DO_MUSICO"
-
-                    pw.append(String.format("- %s %d: %s | R$%.2f%n",
-                            s.instrumentos.instrumentoRequeridos[tipo],
-                            (j + 1),
-                            status,
-                            cache));
-
+                    String status = s.instrumentos.statusVaga[slot]; //"PENDENTE" ou "ID_DO_MUSICO"
+                    pw.append(String.format("- %s %d: %s | R$%.2f%n", s.instrumentos.instrumentoRequeridos[tipo], (j + 1), status, cache));
                     slot++;
                 }
             }
@@ -731,12 +717,12 @@ public class App {
             linha = br.readLine(); //CIDADE
             s.enderecoEvento.cidade = linha.substring(linha.indexOf(":") + 2).trim();
             linha = br.readLine(); //ENDEREÇO
-            String endSemLabel = linha.substring(linha.indexOf(":") + 2).trim(); //"Cenro, rua formosa, Nº 12"
+            String endSemLabel = linha.substring(linha.indexOf(":") + 2).trim();
             int primeiraVirgula = endSemLabel.indexOf(",");
             int ultimaVirgula   = endSemLabel.lastIndexOf(",");
-            s.enderecoEvento.bairro = endSemLabel.substring(0, primeiraVirgula).trim();                  //"Cenro"
-            s.enderecoEvento.logradouro = endSemLabel.substring(primeiraVirgula + 1, ultimaVirgula).trim(); //"rua formosa"
-            String numStr = endSemLabel.substring(endSemLabel.indexOf("Nº") + 2).trim(); // "12"
+            s.enderecoEvento.bairro = endSemLabel.substring(0, primeiraVirgula).trim();
+            s.enderecoEvento.logradouro = endSemLabel.substring(primeiraVirgula + 1, ultimaVirgula).trim();
+            String numStr = endSemLabel.substring(endSemLabel.indexOf("Nº") + 2).trim(); //
             s.enderecoEvento.numero = Integer.parseInt(numStr);
             linha = br.readLine(); //COMPLEMENTO
             s.enderecoEvento.complemento = linha.substring(linha.indexOf(":") + 2).trim();
@@ -751,33 +737,26 @@ public class App {
 
 
             //INSTRUMENTOS
-            // INSTRUMENTOS (robusto: ignora cabeçalho repetido e linhas inválidas)
+            // INSTRUMENTOS
             int lidas = 0;
             while (lidas < numeroDeInstrumentos && (linha = br.readLine()) != null) {
-
-                linha = linha.trim();
-
-                // pula linhas vazias
-                if (linha.isEmpty()) continue;
-
-                // pula cabeçalho repetido (caso exista no arquivo)
+                linha = linha.trim();        //pula linhas vazias
+                if (linha.isEmpty()) continue; //pula cabeçalho repetido
                 if (linha.startsWith("Instrumentos requeridos:")) continue;
-
-                // garante que é uma linha de vaga "- ... : ... | R$..."
-                if (!linha.startsWith("-") || !linha.contains(":") || !linha.contains("|") || !linha.contains("R$")) {
+                if (!linha.startsWith("-") || !linha.contains(":") || !linha.contains("|") || !linha.contains("R$")) { //garante que é uma linha de vaga
                     continue; // ignora qualquer linha fora do padrão
                 }
 
-                // status entre ": " e "|"
+                //status entre ": " e "|"
                 String status = linha.substring(linha.indexOf(":") + 2, linha.lastIndexOf("|")).trim();
                 s.instrumentos.statusVaga[lidas] = status;
                 s.instrumentos.vagaPendente[lidas] = status.equalsIgnoreCase("PENDENTE");
 
-                // pega "guitarra 1" (antes do ":") e remove o número final -> "guitarra"
+                //pega instrumento
                 String antesDoDoisPontos = linha.substring(linha.indexOf("-") + 2, linha.indexOf(":")).trim();
                 String instrumentoAtual = antesDoDoisPontos.substring(0, antesDoDoisPontos.lastIndexOf(" ")).trim();
 
-                // pega cache (aceita "300,00")
+                //pega cache
                 int posR = linha.indexOf("R$");
                 String cacheStr = linha.substring(posR + 2).trim().replace(".", "").replace(",", ".");
                 double valorCache = Double.parseDouble(cacheStr);
@@ -793,7 +772,6 @@ public class App {
                         break;
                     }
                 }
-
                 lidas++;
             }
 
@@ -820,8 +798,6 @@ public class App {
         return s;
     }
 
-    //FILTROS
-
     private static int filtrarMusicosPorInstrumento(Scanner sc, String raizMusico, Show s,
                                                     String instrumentoDesejado, String[] musicosFiltrados) {
         File dir = new File(raizMusico);
@@ -837,30 +813,21 @@ public class App {
             return 1;
         }
 
-        int cont = 1; // começa em 1 para exibir bonito (1,2,3...)
+        int cont = 1;
 
         for (int i = 0; i < arquivos.length; i++) {
             File arq = arquivos[i];
-
-            // segurança: só considerar .txt
             if (!arq.isFile() || !arq.getName().toLowerCase().endsWith(".txt")) continue;
-
             try (BufferedReader br = new BufferedReader(new FileReader(arq))) {
-
                 String id = arq.getName();
                 id = id.substring(0, id.lastIndexOf(".")); // remove .txt
-
                 if (musicoTocaInstrumento(br, instrumentoDesejado)) {
                     System.out.println(cont + " - " + arq.getName());
-
-                    // salva no índice correto (zero-based)
                     if (cont - 1 < musicosFiltrados.length) {
                         musicosFiltrados[cont - 1] = id;
                     }
-
                     cont++;
                 }
-
             } catch (IOException e) {
                 System.out.println("Erro ao ler o arquivo: " + arq.getName());
             }
@@ -871,13 +838,13 @@ public class App {
 
     private static boolean musicoTocaInstrumento(BufferedReader br, String instrumentoDesejado) {
         try {
-            // pula linha em branco inicial (se existir)
+            // pula linha em branco inicial
             br.readLine();
 
             // pula "=== DETALHES DO MÚSICO ==="
             br.readLine();
 
-            // pula "Id: ..."
+            // pula "Id:"
             br.readLine();
 
             // pula "Nome do Músico: ..."
@@ -886,13 +853,10 @@ public class App {
             // lê "Instrumentos de competência do músico: X"
             String linha = br.readLine();
             if (linha == null) return false;
-
             int n = Integer.parseInt(linha.substring(linha.indexOf(":") + 1).trim());
-
             for (int i = 0; i < n; i++) {
                 linha = br.readLine();
                 if (linha == null) return false; // arquivo acabou antes do esperado
-
                 if (linha.trim().equalsIgnoreCase(instrumentoDesejado)) {
                     return true;
                 }
@@ -905,51 +869,6 @@ public class App {
 
         return false;
     }
-
-    private static void filtrarShowsPorInstrmento(File arquivo) {
-
-    }
-
-    private static void atualizarShow(String raizShow, File[] arquivos, Scanner sc) {
-        int opShow = -1;
-
-        do { //Escolha do show
-            System.out.print("Digite o número do show que deseja atualizar: ");
-            opShow = sc.nextInt() - 1;
-            sc.nextLine(); // limpar buffer
-            if (opShow < 0 || opShow >= arquivos.length) {
-                System.out.println("Número inválido! Tente novamente.\n");
-            }
-        } while (opShow < 0 || opShow >= arquivos.length);
-
-        imprimirArquivo(raizShow, arquivos[opShow].getName());      //Mostra o conteúdo atual
-
-        String op;//Confirma atualização
-
-        do {
-            System.out.print("Deseja realmente atualizar este show? (S/N): ");
-            op = sc.nextLine().toUpperCase();
-        } while (!op.equals("S") && !op.equals("N"));
-
-        if (op.equals("N")) {
-            System.out.println("Atualização cancelada.\n");
-            return;
-        }
-
-        if (arquivos[opShow].delete()) { //Apaga o arquivo antigo
-            System.out.println("Arquivo antigo removido com sucesso!");
-        } else {
-            System.out.println("Erro ao remover o arquivo antigo.\n");
-            return;
-        }
-
-        //Cadastra novamente (gera novo ID e arquivo atualizado)
-        System.out.println("\n--- INSIRA OS NOVOS DADOS DO SHOW ---\n");
-        cadastrarShow(raizShow, sc);
-
-        System.out.println("Show atualizado com sucesso!\n");
-    }
-
 
     private static void excluirShow(File[] arquivos, Scanner sc){
         String op = "";
