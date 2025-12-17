@@ -530,23 +530,23 @@ public class App {
 
     private static void registrarMusico(String raizShow, String raizMusico, File arquivo, Scanner sc) {
 
-        // 1) Mostrar show e reconstruir o objeto
+        //Mostrar show e reconstruir o objeto
         String nomeArquivo = arquivo.getName();
         imprimirArquivo(raizShow, nomeArquivo);
 
         Show s = recuperarInfoShow(raizShow, nomeArquivo);
 
-        // Segurança: se por algum motivo não estiver inicializado
+        //se por algum motivo não estiver inicializado
         if (s.instrumentos.statusVaga == null || s.instrumentos.vagaPendente == null) {
             s.instrumentos.statusVaga = new String[s.instrumentos.quantidadeInstrumentosRequeridos];
             s.instrumentos.vagaPendente = new boolean[s.instrumentos.quantidadeInstrumentosRequeridos];
-            for (int idx = 0; idx < s.instrumentos.quantidadeInstrumentosRequeridos; idx++) {
-                s.instrumentos.statusVaga[idx] = "PENDENTE";
-                s.instrumentos.vagaPendente[idx] = true;
+            for (int i = 0; i < s.instrumentos.quantidadeInstrumentosRequeridos; i++) {
+                s.instrumentos.statusVaga[i] = "PENDENTE";
+                s.instrumentos.vagaPendente[i] = true;
             }
         }
 
-        // 2) Montar as opções (somente vagas pendentes) e mapear opção -> slot real
+        //Montar as opções (somente vagas pendentes) e mapear opção -> slot real
         int opcaoExibida = 0;
         int slotGlobal = 0;
 
@@ -558,14 +558,10 @@ public class App {
 
         for (int tipo = 0; tipo < s.instrumentos.instrumentoRequeridos.length; tipo++) {
             int qtd = s.instrumentos.contInstrumentos[tipo];
-
             for (int j = 0; j < qtd; j++) {
-
                 if (slotGlobal >= s.instrumentos.quantidadeInstrumentosRequeridos) break;
-
                 if (s.instrumentos.vagaPendente[slotGlobal]) {
                     double cache = (s.instrumentos.valorCache[tipo] != null) ? s.instrumentos.valorCache[tipo] : 0.0;
-
                     System.out.printf(
                             "%d) %s %d: PENDENTE | R$%.2f%n",
                             (opcaoExibida + 1),
@@ -573,14 +569,11 @@ public class App {
                             (j + 1),
                             cache
                     );
-
                     salvaInstrumentoOpcao[opcaoExibida] = s.instrumentos.instrumentoRequeridos[tipo];
                     salvaCacheOpcao[opcaoExibida] = cache;
                     salvaSlotRealOpcao[opcaoExibida] = slotGlobal;
-
                     opcaoExibida++;
                 }
-
                 slotGlobal++;
             }
         }
@@ -610,13 +603,13 @@ public class App {
         int slotSelecionado = salvaSlotRealOpcao[escolhaVaga];
         String instrumentoEscolhido = salvaInstrumentoOpcao[escolhaVaga];
 
-        // 4) Filtrar músicos que tocam o instrumento escolhido e escolher um
+        //Filtrar músicos que tocam o instrumento escolhido e escolher um
         String[] musicosFiltrados = new String[50];
 
         System.out.println("\nSelecione o músico que deseja atribuir:");
         int contRetorno = filtrarMusicosPorInstrumento(sc, raizMusico, s, instrumentoEscolhido, musicosFiltrados);
 
-        // Sua função retorna cont começando em 1. Então a quantidade real é cont-1.
+        //Função retorna cont começando em 1. Então a quantidade real é cont-1.
         int qtdMusicos = contRetorno - 1;
 
         if (qtdMusicos <= 0) {
@@ -642,11 +635,11 @@ public class App {
 
         String musicoEscolhido = musicosFiltrados[escolhaMusico];
 
-        // 5) Atualiza o estado interno da vaga (PENDENTE -> ID do músico)
+        //Atualiza o estado interno da vaga (PENDENTE -> ID do músico)
         s.instrumentos.statusVaga[slotSelecionado] = musicoEscolhido;
         s.instrumentos.vagaPendente[slotSelecionado] = false;
 
-        // 6) Reescrever o arquivo do show preservando o status de cada vaga
+        //Reescrever o arquivo do show preservando o status de cada vaga
         try {
             PrintWriter pw = new PrintWriter(raizShow + s.id + ".txt");
 
